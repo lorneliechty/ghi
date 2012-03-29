@@ -1,0 +1,26 @@
+An ideal minimum set of ghi commands
+----------------------------------------------------------------------------
+git issue init
+
+git issue
+git issue <id>
+git issue <ref>[..<ref>]
+git issue -p <priority>
+git issue -a "author" 
+git issue -- ./path/to/src/
+git issue 
+
+git issue add "Title" -d "Description" -p <priority>
+
+git issue mod <id> -c "Comment"
+
+git issue rm <id>	# resolves as closed?
+
+git issue ???
+
+Helper commands of git issue mod
+---------------------------------
+git issue assign <id> "Author"
+
+git issue resolve <resolution>
+
