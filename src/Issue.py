@@ -8,7 +8,10 @@ class Issue:
     status = 0
 
 def writeIssueToDisk(filepath, issue):
-    print issue.title + "\n" + issue.description
+    print r"ISSUE"
+    print issue.status
+    print issue.title
+    print issue.description
     return
 
 def readIssueFromDisk(filepath):
