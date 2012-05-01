@@ -7,20 +7,42 @@ class Issue:
 
     status = 0
 
-def writeIssueToDisk(filepath, issue):
-    print r"ISSUE"
-    print issue.status
-    print issue.title
-    print issue.description
-    return
+class IssueFile:
+	"""Wraps all file I/O for Issues"""
+	FIELD_DELIM = "\n"
+	FILE_TAG = "ISSUE-1"
 
-def readIssueFromDisk(filepath):
-    return Issue()
+	@staticmethod
+	def writeIssueToDisk(filepath, issue):
+		my = IssueFile
+		with open(filepath, 'wb') as f:
+			f.write(my.FILE_TAG + my.FIELD_DELIM)
+			f.write(str(issue.status) + my.FIELD_DELIM)
+			f.write(issue.title + my.FIELD_DELIM)
+			f.write(issue.description + my.FIELD_DELIM)
+		f.closed
+		return
+
+	@staticmethod
+	def readIssueFromDisk(filepath):
+		my = IssueFile
+		issue = Issue()
+		with open(filepath, 'rb') as f:
+			buf = f.read(sys.getsizeof(my.FILE_TAG + my.FIELD_DELIM))
+			if buf == my.FILE_TAG + my.FIELD_DELIM:
+				print my.FILE_TAG
+				
+		f.closed
+		return issue
+
+def test():
+	startIssue = Issue()
+	startIssue.title = "test issue title"
+	startIssue.description = "test issue description"
+	IssueFile.writeIssueToDisk("/Users/lorne/dev/personal/ghi/src/test-issue",startIssue)
+	endIssue = IssueFile.readIssueFromDisk("/Users/lorne/dev/personal/ghi/src/test-issue")
 
 if __name__ == "__main__":
     import sys
-    issue = Issue()
-    issue.title = "test issue title"
-    issue.description = "test issue description"
-    writeIssueToDisk("",issue)
+    test()
 

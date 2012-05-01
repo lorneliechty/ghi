@@ -1,43 +1,51 @@
 #! /usr/bin/env python
 
 class Config:
-    statusOpts = {  0: 'New', 
-                    1: 'In Progress', 
-                    2: 'Fixed' }
+    statusOpts = { }
 
-def writeConfigToFile(filepath, config):
-    with open(filepath, 'wb') as f:
-        
-        f.write('[status]\n');
-        for k, v in config.statusOpts.iteritems():
-            f.write('\t{} = {}\n'.format(k,v))
+class ConfigFile:
+	STATUS = "status"
+	BLOCK_STATUS = "[" + STATUS  + "]"
 
-    f.closed
-    return
+	@staticmethod
+	def write(filepath, config):
+		my = ConfigFile
+		with open(filepath, 'wb') as f:
+			
+			f.write(my.BLOCK_STATUS + '\n');
+			for k, v in config.statusOpts.iteritems():
+				f.write('\t{} = {}\n'.format(k,v))
 
-def readConfigFromFile(filepath):
-    config = Config()
+		f.closed
+		return
 
-    with open(filepath, 'rb') as f:
-        lines = f.readlines()
+	@staticmethod
+	def read(filepath):
+		my = ConfigFile
+		config = Config()
+		with open(filepath, 'rb') as f:
+			lines = f.readlines()
 
-        marks = {};
-        for i, line in enumerate(lines):
-            if line.rstrip() == '[status]':
-                marks['status'] = i
-        
-        for line in lines[marks['status']+1:]:
-            key, val = line.strip().split('=')
-            config.statusOpts[int(key.strip())] = val.strip()
+			marks = {};
+			for i, line in enumerate(lines):
+				if line.rstrip() == my.BLOCK_STATUS:
+					marks[my.STATUS] = i
+			
+			for line in lines[marks[my.STATUS] + 1:]:
+				key, val = line.strip().split('=')
+				config.statusOpts[int(key.strip())] = val.strip()
 
-    f.closed
+		f.closed
+		return config
 
-    return config
+def test():
+	startConfig = Config()
+	startConfig.statusOpts = {0: 'New', 1: 'In Progress', 2: 'Fixed'}
+	print startConfig.statusOpts
+	ConfigFile.write("/Users/lorne/dev/personal/ghi/src/test",startConfig)
+	endConfig = ConfigFile.read("/Users/lorne/dev/personal/ghi/src/test")
+	print endConfig.statusOpts
 
 if __name__ == "__main__":
-    import sys
-    startConfig = Config()
-    print startConfig.statusOpts
-    writeConfigToFile("/Users/lorne/dev/personal/ghi/src/test",startConfig)
-    endConfig = readConfigFromFile("/Users/lorne/dev/personal/ghi/src/test")
-    print endConfig.statusOpts
+	import sys
+	test()
