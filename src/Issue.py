@@ -9,7 +9,7 @@ class Issue:
 
 class IssueFile:
 	"""Wraps all file I/O for Issues"""
-	FIELD_DELIM = "\n"
+	FIELD_DELIM = '\n'
 	FILE_TAG = "ISSUE-1"
 
 	@staticmethod
@@ -28,19 +28,36 @@ class IssueFile:
 		my = IssueFile
 		issue = Issue()
 		with open(filepath, 'rb') as f:
-			buf = f.read(sys.getsizeof(my.FILE_TAG + my.FIELD_DELIM))
-			if buf == my.FILE_TAG + my.FIELD_DELIM:
-				print my.FILE_TAG
-				
+			# Verify file type
+			buf = f.readline().strip()
+			if buf != my.FILE_TAG:
+				print "FAIL!", buf
+				return None
+			
+			# Status
+			issue.status = f.readline().strip()
+			# Title
+			issue.title = f.readline().strip()
+			
+			# All remaining lines in the file are the issue description
+			lines = f.readlines()
+			for l in lines:
+				issue.description += l
+			# Remove any trailing new line
+			issue.description = issue.description.rstrip()
+
 		f.closed
 		return issue
 
 def test():
 	startIssue = Issue()
 	startIssue.title = "test issue title"
-	startIssue.description = "test issue description"
+	startIssue.description = "test issue description\ntest desc line 2"
+	print startIssue.status, startIssue.title, startIssue.description
 	IssueFile.writeIssueToDisk("/Users/lorne/dev/personal/ghi/src/test-issue",startIssue)
 	endIssue = IssueFile.readIssueFromDisk("/Users/lorne/dev/personal/ghi/src/test-issue")
+	print endIssue.status, endIssue.title, endIssue.description
+	#print startIssue.status, startIssue.title, startIssue.description
 
 if __name__ == "__main__":
     import sys
