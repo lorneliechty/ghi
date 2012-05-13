@@ -1,19 +1,24 @@
 An ideal minimum set of ghi commands
 ----------------------------------------------------------------------------
+# Initialize ghi within this git
 git issue init
 
+# List issues in read-only format (equivalent to git log)
 git issue
 git issue <id>
 git issue <ref>[..<ref>]
 git issue -p <priority>
 git issue -a "author" 
-git issue -- ./path/to/src/
+git issue -- path/to/src/
 git issue 
 
-git issue add "Title" -d "Description" -p <priority>
+# Add a new issues
+git issue add "Title" -d "Description"
 
-git issue mod <id> -c "Comment"
+# Edit an existing issue
+git issue edit <id> -t "Title"
 
+# Remove an issue
 git issue rm <id>	# resolves as closed?
 
 git issue ???

@@ -54,7 +54,7 @@ def test():
 	startIssue.title = "test issue title"
 	startIssue.description = "test issue description\ntest desc line 2"
 	print startIssue.status, startIssue.title, startIssue.description
-	IssueFile.writeIssueToDisk("/Users/lorne/dev/personal/ghi/src/test-issue",startIssue)
+	IssueFile.writeIssueToDisk("/Users/lorne/dev/personal/ghi/src/test-issue", startIssue)
 	endIssue = IssueFile.readIssueFromDisk("/Users/lorne/dev/personal/ghi/src/test-issue")
 	print endIssue.status, endIssue.title, endIssue.description
 	#print startIssue.status, startIssue.title, startIssue.description
