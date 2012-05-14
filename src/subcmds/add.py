@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-import issue
+from issue import Issue
+from issue import IssueFile
+import uuid
 
 NAME="add"
 HELP="Add a new issue"
@@ -17,9 +19,21 @@ class Args:
 def execute(args):
     
     # First validate arguments
+    if (args.title == None):
+        # Title is required... no good
+        return None
     
     # Create new issue
-    newIssue = issue.Issue();
+    issue = Issue();
     
     # Set title
-#    if (args.)
+    issue.title = args.title
+    
+    # Set description
+    if (args.description):
+        issue.description = args.description
+    
+    print issue.title, issue.description
+    
+    id = uuid.uuid4()
+    file = IssueFile()
