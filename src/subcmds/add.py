@@ -3,6 +3,7 @@
 from issue import Issue
 from issue import IssueFile
 import uuid
+import config
 
 NAME="add"
 HELP="Add a new issue"
@@ -33,7 +34,10 @@ def execute(args):
     if (args.description):
         issue.description = args.description
     
-    print issue.title, issue.description
+    # Generate an issue ID and then write the issue file to disk
+    issueID = uuid.uuid4()
+    IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + str(issueID), 
+                               issue)
     
-    id = uuid.uuid4()
-    file = IssueFile()
+    # Display the new issue ID to the user
+    print str(issueID)

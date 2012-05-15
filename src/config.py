@@ -1,5 +1,20 @@
 #! /usr/bin/env python
 
+import subprocess
+
+# Get the git top-level directory
+GIT_ROOT = subprocess.Popen(
+    'git rev-parse --show-toplevel',
+    shell=True,
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    close_fds=True).stdout.read().strip()
+
+GHI_DIR = GIT_ROOT + '/.ghi'
+ISSUES_DIR = GHI_DIR + '/issues'
+
+
 class Config:
     statusOpts = { }
 
