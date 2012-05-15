@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-import os
-import subprocess
 import config
+import os
 
 NAME="init"
 HELP="give git issues"
