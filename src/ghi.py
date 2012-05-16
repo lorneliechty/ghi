@@ -70,7 +70,7 @@ for i,arg in enumerate(sys.argv):
 
 # Make the default subcommand 'ls'
 if (posarg == False):
-    args = parser.parse_args(sys.argv.extend(['ls']))
+    args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
     args = parser.parse_args()
 

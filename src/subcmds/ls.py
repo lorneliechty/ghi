@@ -14,7 +14,8 @@ class Args:
     ID_DEFAULT="*"
 
 def execute(args):
-    print dircache.listdir(config.ISSUES_DIR)
+    for issue in dircache.listdir(config.ISSUES_DIR): 
+        print issue
 
 if (__name__ == "__main__"):
     execute()
