@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 
-import dircache
+from color import Color
+from issue import IssueFile
 import config
+import dircache
 
 NAME = "ls"
 HELP = "List issues"
@@ -14,8 +16,11 @@ class Args:
     ID_DEFAULT="*"
 
 def execute(args):
-    for issue in dircache.listdir(config.ISSUES_DIR): 
-        print issue
+    for issueID in dircache.listdir(config.ISSUES_DIR):
+        issue = IssueFile.readIssueFromDisk(
+                                config.ISSUES_DIR + "/" + issueID) 
+        print str(Color('yellow')) + issueID[:7] + str(Color('none')) + \
+                "\t" + issue.title
 
 if (__name__ == "__main__"):
     execute()
