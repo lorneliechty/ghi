@@ -55,6 +55,29 @@ class IssueFile:
 
 		f.closed
 		return issue
+	
+	@staticmethod
+	def readEditableIssueFromDisk(filepath):
+		issue = Issue()
+		with open(filepath, 'rb') as f:
+			lines = f.readlines()
+			n = 0
+			for l in lines:
+				if (l.find('#',0,1) == -1):
+					if (n==0):
+						issue.title = l.rstrip()
+#					elif (n==1):
+#						issue.status = l
+					else:
+						issue.description += l			
+					n += 1
+																
+			# Remove any trailing new line
+			issue.description = issue.description.rstrip()
+
+		f.closed
+		return issue
+		
 
 def test():
 	startIssue = Issue()

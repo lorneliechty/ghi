@@ -39,6 +39,7 @@ def execute(args):
         tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
         IssueFile.writeEditableIssueToDisk(tmpFile, issue)
         subprocess.call([config.GIT_EDITOR, tmpFile])
+        issue = IssueFile.readEditableIssueFromDisk(tmpFile)
         
     else:
         # Set title
@@ -49,10 +50,10 @@ def execute(args):
         if (args.description):
             issue.description = args.description
         
-        # Write the issue file to disk
-        IssueFile.writeIssueToDisk(
-                                config.ISSUES_DIR + "/" + issueID, 
-                                issue)
+    # Write the issue file to disk
+    IssueFile.writeIssueToDisk(
+                            config.ISSUES_DIR + "/" + issueID, 
+                            issue)
     
     # Give the user some feedback on the success
     print "Issue Updated"
