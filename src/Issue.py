@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 class Issue:
-    """Class that represents an Issue"""
-    title = r""
-    description = r""
+	"""Class that represents an Issue"""
+	title = r""
+	description = r""
 
-    status = 0
+	status = 0
 
 class IssueFile:
 	"""Wraps all file I/O for Issues"""
@@ -21,7 +21,14 @@ class IssueFile:
 			f.write(issue.title + my.FIELD_DELIM)
 			f.write(issue.description + my.FIELD_DELIM)
 		f.closed
-		return
+
+	@staticmethod
+	def writeEditableIssueToDisk(filepath, issue):
+		my = IssueFile
+		with open(filepath, 'wb') as f:
+			f.write(issue.title + my.FIELD_DELIM)
+			f.write(issue.description + my.FIELD_DELIM)
+		f.closed
 
 	@staticmethod
 	def readIssueFromDisk(filepath):
@@ -60,6 +67,5 @@ def test():
 	#print startIssue.status, startIssue.title, startIssue.description
 
 if __name__ == "__main__":
-    import sys
-    test()
-
+	import sys
+	test()

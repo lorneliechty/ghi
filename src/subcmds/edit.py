@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
-from issue import Issue
-from issue import IssueFile
+from issue import Issue, IssueFile
 import config
 import identifiers
+import subprocess
+import sys
 
 NAME="edit"
 HELP="Edit an existing issue"
@@ -28,23 +29,30 @@ def execute(args):
     if (issueID == None):
         # ID is required... no good
         return None
-    
+
     # Load the existing issue
     issue = IssueFile.readIssueFromDisk(
                             config.ISSUES_DIR + "/" + issueID);
     
-    # Set title
-    if (args.title):
-        issue.title = args.title
-    
-    # Set description
-    if (args.description):
-        issue.description = args.description
-    
-    # Write the issue file to disk
-    IssueFile.writeIssueToDisk(
-                            config.ISSUES_DIR + "/" + issueID, 
-                            issue)
+    # Are we going to use interactive editing?    
+    if (args.title == None and args.description == None):
+        tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
+        IssueFile.writeEditableIssueToDisk(tmpFile, issue)
+        subprocess.call([config.GIT_EDITOR, tmpFile])
+        
+    else:
+        # Set title
+        if (args.title):
+            issue.title = args.title
+        
+        # Set description
+        if (args.description):
+            issue.description = args.description
+        
+        # Write the issue file to disk
+        IssueFile.writeIssueToDisk(
+                                config.ISSUES_DIR + "/" + issueID, 
+                                issue)
     
     # Give the user some feedback on the success
     print "Issue Updated"
