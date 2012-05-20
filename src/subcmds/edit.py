@@ -3,6 +3,7 @@
 from issue import Issue
 from issue import IssueFile
 import config
+import identifiers
 
 NAME="edit"
 HELP="Edit an existing issue"
@@ -23,13 +24,14 @@ class Args:
 def execute(args):
     
     # First validate arguments
-    if (args.id == None):
+    issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+    if (issueID == None):
         # ID is required... no good
         return None
     
     # Load the existing issue
     issue = IssueFile.readIssueFromDisk(
-                            config.ISSUES_DIR + "/" + args.id);
+                            config.ISSUES_DIR + "/" + issueID);
     
     # Set title
     if (args.title):
@@ -41,7 +43,7 @@ def execute(args):
     
     # Write the issue file to disk
     IssueFile.writeIssueToDisk(
-                            config.ISSUES_DIR + "/" + args.id, 
+                            config.ISSUES_DIR + "/" + issueID, 
                             issue)
     
     # Give the user some feedback on the success

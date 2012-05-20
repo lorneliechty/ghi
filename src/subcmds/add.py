@@ -2,7 +2,7 @@
 
 from issue import Issue
 from issue import IssueFile
-import uuid
+import identifiers
 import config
 
 NAME="add"
@@ -35,7 +35,7 @@ def execute(args):
         issue.description = args.description
     
     # Generate an issue ID and then write the issue file to disk
-    issueID = uuid.uuid4()
+    issueID = identifiers.genNewIssueID()
     IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + str(issueID), 
                                issue)
     
