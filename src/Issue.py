@@ -107,5 +107,4 @@ def test():
 	#print startIssue.status, startIssue.title, startIssue.description
 
 if __name__ == "__main__":
-	import sys
 	test()
