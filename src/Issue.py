@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import config
 
 class Issue:
 	"""Class that represents an Issue"""
@@ -18,14 +19,6 @@ class IssueFile:
 		with open(filepath, 'wb') as f:
 			f.write(my.FILE_TAG + my.FIELD_DELIM)
 			f.write(str(issue.status) + my.FIELD_DELIM)
-			f.write(issue.title + my.FIELD_DELIM)
-			f.write(issue.description + my.FIELD_DELIM)
-		f.closed
-
-	@staticmethod
-	def writeEditableIssueToDisk(filepath, issue):
-		my = IssueFile
-		with open(filepath, 'wb') as f:
 			f.write(issue.title + my.FIELD_DELIM)
 			f.write(issue.description + my.FIELD_DELIM)
 		f.closed
@@ -57,17 +50,41 @@ class IssueFile:
 		return issue
 	
 	@staticmethod
+	def writeEditableIssueToDisk(filepath, issue):
+		with open(filepath, 'wb') as f:
+			# Title with helper comment
+			f.write('# TITLE: One line immediately below this comment' + '\n')
+			f.write(issue.title + '\n')
+			
+			# Status with helper comment
+			f.write("\n")
+			f.write('# STATUS: One line immediately below this comment' + '\n')
+			f.write('# Legal values are:' + '\n')
+			statusOpts = config.STATUS_OPTS
+			for val,status in statusOpts.iteritems():
+				f.write('#\t' + str(val) + ': ' + status + '\n')
+			f.write(str(issue.status) + '\n')
+			
+			# Description with helper comment
+			f.write("\n")
+			f.write('# DESCRIPTION: All lines below this comment' + '\n')
+			f.write(issue.description + '\n')
+		f.closed
+
+	@staticmethod
 	def readEditableIssueFromDisk(filepath):
 		issue = Issue()
 		with open(filepath, 'rb') as f:
 			lines = f.readlines()
 			n = 0
 			for l in lines:
-				if (l.find('#',0,1) == -1):
+				if (l.find('#',0,1) == -1 
+					and (n > 2 or not len(l.rstrip()) == 0)):
+					
 					if (n==0):
 						issue.title = l.rstrip()
-#					elif (n==1):
-#						issue.status = l
+					elif (n==1):
+						issue.status = l.rstrip()
 					else:
 						issue.description += l			
 					n += 1

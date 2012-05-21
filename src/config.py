@@ -1,70 +1,61 @@
 #! /usr/bin/env python
 
-import subprocess
+class _Module:
+	'''This class provides a series of lazy-loaded properties that
+	represent the general ghi config.'''
+	@property
+	def STATUS_OPTS(self):
+		'''List of legal issue status values'''
+		import config_file
+		if not hasattr(self, '_STATUS_OPTS'):
+			config = config_file.ConfigFile.read(self.GHI_DIR + '/config')
+			self._STATUS_OPTS = config.statusOpts
+		return self._STATUS_OPTS
+	
+	@property
+	def GIT_ROOT(self):
+		'''Get the git top-level directory'''
+		from subprocess_helper import getCmd
+		if not hasattr(self, '_GIT_ROOT'):
+			self._GIT_ROOT = getCmd('git rev-parse --show-toplevel')
+		return self._GIT_ROOT
+	
+	@property
+	def GHI_DIR(self):
+		'''Get the root directory for all ghi files'''
+		if not hasattr(self, '_GHI_ROOT'):
+			self._GHI_ROOT = self.GIT_ROOT + '/.ghi' 
+		return self._GHI_ROOT
+	
+	@property
+	def ISSUES_DIR(self):
+		'''Get the root directory for all ghi files'''
+		if not hasattr(self, '_ISSUES_DIR'):
+			self._ISSUES_DIR = self.GHI_DIR + '/issues' 
+		return self._ISSUES_DIR
+	
+	@property
+	def GIT_EDITOR(self):
+		'''Get the root directory for all ghi files'''
+		from subprocess_helper import getCmd
+		if not hasattr(self, '_GIT_EDITOR'):
+			self._GIT_EDITOR = getCmd('git config core.editor')
+		return self._GIT_EDITOR
 
-def _runGitCmd(cmd):
-    return subprocess.Popen(
-        cmd,
-        shell=True,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        close_fds=True).stdout.read().strip()
+# The same properties from above are listed here simply so that
+# tab completions and auto-discovery features of Eclipse don't
+# break due to the fact that we're swapping the module reference
+# in the namespace at the bottom of this file
+GIT_ROOT = _Module.GIT_ROOT
+GHI_DIR = _Module.GHI_DIR
+ISSUES_DIR = _Module.ISSUES_DIR
 
-# Get the git top-level directory
-GIT_ROOT = _runGitCmd('git rev-parse --show-toplevel') 
+GIT_EDITOR = _Module.GIT_EDITOR
 
-GHI_DIR = GIT_ROOT + '/.ghi'
-ISSUES_DIR = GHI_DIR + '/issues'
+STATUS_OPTS = _Module.STATUS_OPTS
 
-GIT_EDITOR = _runGitCmd('git config core.editor')
-
-class Config:
-    statusOpts = { }
-
-class ConfigFile:
-	STATUS = "status"
-	BLOCK_STATUS = "[" + STATUS + "]"
-
-	@staticmethod
-	def write(filepath, config):
-		my = ConfigFile
-		with open(filepath, 'wb') as f:
-			
-			f.write(my.BLOCK_STATUS + '\n');
-			for k, v in config.statusOpts.iteritems():
-				f.write('\t{} = {}\n'.format(k, v))
-
-		f.closed
-		return
-
-	@staticmethod
-	def read(filepath):
-		my = ConfigFile
-		config = Config()
-		with open(filepath, 'rb') as f:
-			lines = f.readlines()
-
-			marks = {};
-			for i, line in enumerate(lines):
-				if line.rstrip() == my.BLOCK_STATUS:
-					marks[my.STATUS] = i
-			
-			for line in lines[marks[my.STATUS] + 1:]:
-				key, val = line.strip().split('=')
-				config.statusOpts[int(key.strip())] = val.strip()
-
-		f.closed
-		return config
-
-def test():
-	startConfig = Config()
-	startConfig.statusOpts = {0: 'New', 1: 'In Progress', 2: 'Fixed'}
-	print startConfig.statusOpts
-	ConfigFile.write("/Users/lorne/dev/personal/ghi/src/test", startConfig)
-	endConfig = ConfigFile.read("/Users/lorne/dev/personal/ghi/src/test")
-	print endConfig.statusOpts
-
-if __name__ == "__main__":
+if not __name__ == "__main__":
+	# This craziness makes all of our PROPERTIES in the _Module class
+	# immediately usable for anyone that imports the config module.
 	import sys
-	test()
+	sys.modules[__name__] = _Module()
