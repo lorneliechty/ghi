@@ -1,0 +1,4 @@
+ISSUE-1
+0
+Tab completion of issue IDs
+Would be nice to also be able to tab-complete git references & possibly issue titles as well
