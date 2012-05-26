@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
-from issue import Issue, IssueFile
+from issue import IssueFile
 import config
 import identifiers
 import subprocess
-import sys
 
 NAME="edit"
 HELP="Edit an existing issue"

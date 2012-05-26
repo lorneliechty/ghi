@@ -4,15 +4,22 @@ import argparse
 import subcmds
 import sys
 
+GHI_VERSION = "0.0.1"
+
 # Create top-level argument parser
 parser = argparse.ArgumentParser()
+
+#parser.add_argument("-v","--version")
 
 cmds = parser.add_subparsers(title="subcommands",
                              help="valid subcommands")
 
 # Create the 'init' command parser
-cmd_init = cmds.add_parser(subcmds.init.NAME, 
+cmd_init = cmds.add_parser(subcmds.init.NAME,
                            help=subcmds.init.HELP)
+
+cmd_init.add_argument(subcmds.init.Args.OPT_GHI_PATH,
+					  help=subcmds.init.Args.OPT_GHI_PATH_HELP)
 
 cmd_init.set_defaults(func=subcmds.init.execute)
 
@@ -28,10 +35,10 @@ cmd_ls.add_argument(subcmds.ls.Args.ID,
 cmd_ls.set_defaults(func=subcmds.ls.execute)
 
 # Create the 'add' command parser
-cmd_add = cmds.add_parser(subcmds.add.NAME, 
+cmd_add = cmds.add_parser(subcmds.add.NAME,
                           help=subcmds.add.HELP)
 
-cmd_add.add_argument(subcmds.add.Args.TITLE, 
+cmd_add.add_argument(subcmds.add.Args.TITLE,
                      help=subcmds.add.Args.TITLE_HELP)
 
 cmd_add.add_argument(subcmds.add.Args.OPT_DESCRIPTION_SHORT,
@@ -41,7 +48,7 @@ cmd_add.add_argument(subcmds.add.Args.OPT_DESCRIPTION_SHORT,
 cmd_add.set_defaults(func=subcmds.add.execute);
 
 # Create the 'edit' command parser
-cmd_edit = cmds.add_parser(subcmds.edit.NAME, 
+cmd_edit = cmds.add_parser(subcmds.edit.NAME,
                            help=subcmds.edit.HELP)
 
 cmd_edit.add_argument(subcmds.edit.Args.ID,
@@ -64,7 +71,7 @@ cmd_rm.add_argument("id", help="Issue ID")
 
 # Quick sanity check to see if any subcommand was given at all
 posarg = False
-for i,arg in enumerate(sys.argv):
+for i, arg in enumerate(sys.argv):
     if (i != 0 and str(arg)[0] != '-'):
         posarg = True
 

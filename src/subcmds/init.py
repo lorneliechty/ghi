@@ -1,10 +1,16 @@
-#! /usr/bin/env python
+	#! /usr/bin/env python
 
 import config
 import os
+from subprocess_helper import getCmd
 
 NAME="init"
 HELP="give git issues"
+
+class Args:
+	"""Wrapper class that defines the command line args"""
+	OPT_GHI_PATH="--ghi_path"
+	OPT_GHI_PATH_HELP="Path to ghi install"
 
 def execute(args):
 	# Check to see if the .ghi directories have already been created
@@ -16,3 +22,9 @@ def execute(args):
 		os.makedirs(config.ISSUES_DIR)
 	else:
 		print "This git already has issues."
+		
+	# Alias "git issue" to ghi
+	if (args.ghi_path):
+		getCmd("git config alias.issue '!" + args.ghi_path + "'")
+	else:
+		getCmd("git config alias.issue '!ghi'")
