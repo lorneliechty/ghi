@@ -1,0 +1,5 @@
+ISSUE-1
+0
+Need build script to create releases
+Currently there is no way to create a redistributable form of ghi.
+I would like to have a process for creating a copy-pastable ghi install that can be used by people who aren't ghi developers.
