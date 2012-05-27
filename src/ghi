@@ -71,8 +71,13 @@ cmd_edit.set_defaults(func=subcmds.edit.execute);
 
 
 # Create the 'rm' command parser
-cmd_rm = cmds.add_parser("rm", help="remove an issue")
-cmd_rm.add_argument("id", help="Issue ID")
+cmd_rm = cmds.add_parser(subcmds.rm.NAME, 
+						 help=subcmds.rm.HELP)
+
+cmd_rm.add_argument(subcmds.rm.Args.ID,
+					help=subcmds.rm.Args.ID_HELP)
+
+cmd_rm.set_defaults(func=subcmds.rm.execute)
 
 # Quick sanity check to see if any subcommand was given at all
 posarg = False
