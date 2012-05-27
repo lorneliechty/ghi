@@ -1,7 +1,7 @@
 An ideal minimum set of ghi commands
 ----------------------------------------------------------------------------
 # Initialize ghi within this git
-git issue init
+ghi init
 
 # List issues in read-only format (equivalent to git log)
 git issue
@@ -23,7 +23,7 @@ git issue rm <id>	# resolves as closed?
 
 git issue ???
 
-Helper commands of git issue mod
+Helper commands of git issue edit
 ---------------------------------
 git issue assign <id> "Author"
 
