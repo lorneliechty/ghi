@@ -18,13 +18,19 @@ def execute(args):
 	if os.path.isdir(config.GHI_DIR) == False:
 		os.makedirs(config.GHI_DIR)
 		os.makedirs(config.ISSUES_DIR)
+		
+		_writeGhiDirGitIgnoreFile(config.GHI_DIR + "/.gitignore")
+
 	elif os.path.isdir(config.ISSUES_DIR) == False:
 		os.makedirs(config.ISSUES_DIR)
-	else:
-		print "This git already has issues."
-		
+
 	# Alias "git issue" to ghi
 	if (args.ghi_path):
 		getCmd("git config alias.issue '!" + args.ghi_path + "'")
 	else:
 		getCmd("git config alias.issue '!ghi'")
+
+def _writeGhiDirGitIgnoreFile(filepath):
+	with open(filepath, 'wb') as f:
+		f.write("ISSUE_EDIT\n")
+	f.close()
