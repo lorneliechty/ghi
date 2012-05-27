@@ -1,0 +1,5 @@
+ISSUE-1
+0
+Auto-commits cause Eclipse to require a refresh of files in git working copy
+This is probably because we use git-stash (--all) to clean the working copy and index prior to the auto commit.
+Not sure if there is another way to clean the index and make sure we ONLY commit the issue file.
