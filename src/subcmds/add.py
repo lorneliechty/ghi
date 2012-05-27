@@ -54,10 +54,25 @@ def execute(args):
 			issue.description = args.description
 
 	if (issue):
+		# Adding an issue includes adding a new commit to the repository.
+		# To make sure that our commit doesn't include anything other
+		# than this issue, clean the working copy using git-stash
+		getCmd("git stash --all")
+		
 		# Generate an issue ID and then write the issue file to disk
-		issueID = identifiers.genNewIssueID()
-		IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + str(issueID), 
+		issueID = str(identifiers.genNewIssueID())
+		IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + issueID, 
 								   issue)
 		
+		# Add the issue to git
+		getCmd("git add " + config.ISSUES_DIR + "/" + issueID)
+		
+		# Commit the issue add
+		getCmd('git commit -m "ghi-add Issue #' + issueID[:7] + ': '
+			+ issue.title + '"')
+		
+		# Now restore the working copy
+		getCmd("git stash pop")
+		
 		# Display the new issue ID to the user
-		print str(issueID)
+		print issueID
