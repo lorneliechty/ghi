@@ -51,9 +51,7 @@ def execute(args):
 			issue.description = args.description
 		
 	# Write the issue file to disk
-	commit_helper.cleanWcAndCommitIssue(
-							config.ISSUES_DIR + "/" + issueID, 
-							issue)
+	commit_helper.cleanWcAndCommitIssue(issueID, issue)
 	
 	# Give the user some feedback on the success
 	print "Issue Updated"
