@@ -1,0 +1,5 @@
+ISSUE-1
+0
+Add ability to display issue details
+Need to be able to print the details of an issue to stdout.
+Example: 'git issue <id>' should display all info about the issue.
