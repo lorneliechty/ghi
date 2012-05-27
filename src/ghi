@@ -43,6 +43,7 @@ cmd_add = cmds.add_parser(subcmds.add.NAME,
 						  help=subcmds.add.HELP)
 
 cmd_add.add_argument(subcmds.add.Args.TITLE,
+					 nargs=subcmds.add.Args.TITLE_NARGS,
 					 help=subcmds.add.Args.TITLE_HELP)
 
 cmd_add.add_argument(subcmds.add.Args.OPT_DESCRIPTION_SHORT,

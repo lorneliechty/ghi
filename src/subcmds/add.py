@@ -1,43 +1,63 @@
 #! /usr/bin/env python
 
-from issue import Issue
-from issue import IssueFile
-import identifiers
+from issue import Issue, IssueFile
 import config
+import identifiers
+import subprocess
+from subprocess_helper import getCmd
 
 NAME="add"
 HELP="Add a new issue"
 
 class Args:
-    """Wrapper class that defines the command line args"""
-    TITLE="title"
-    TITLE_HELP="One line issue title"
-    
-    OPT_DESCRIPTION="--description"
-    OPT_DESCRIPTION_SHORT="-d"
-    OPT_DESCRIPTION_HELP="Description"
+	"""Wrapper class that defines the command line args"""
+	TITLE="title"
+	TITLE_NARGS="?"
+	TITLE_HELP="One line issue title"
+	
+	OPT_DESCRIPTION="--description"
+	OPT_DESCRIPTION_SHORT="-d"
+	OPT_DESCRIPTION_HELP="Description"
 
 def execute(args):
-    
-    # First validate arguments
-    if (args.title == None):
-        # Title is required... no good
-        return None
-    
-    # Create new issue
-    issue = Issue();
-    
-    # Set title
-    issue.title = args.title
-    
-    # Set description
-    if (args.description):
-        issue.description = args.description
-    
-    # Generate an issue ID and then write the issue file to disk
-    issueID = identifiers.genNewIssueID()
-    IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + str(issueID), 
-                               issue)
-    
-    # Display the new issue ID to the user
-    print str(issueID)
+	issue = None
+	
+	# First validate arguments
+	if (args.title == None and args.description == None):
+		# If no arguments, drop into interactive mode
+		tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
+		issue = Issue()
+		IssueFile.writeEditableIssueToDisk(tmpFile, issue)
+		tmpFileHash = getCmd("git hash-object " + tmpFile)
+		
+		subprocess.call([config.GIT_EDITOR, tmpFile])
+		issue = IssueFile.readEditableIssueFromDisk(tmpFile)
+		
+		# Check to see if the tmpFile is unchanged
+		if (tmpFileHash == getCmd("git hash-object " + tmpFile)):
+			print "Not enough data to create issue. No issue created."
+			return None
+	
+	elif (args.title == None):
+		# Title is required... no good
+		return None
+	
+	else:
+		# Create new issue
+		issue = Issue();
+		
+		# Set title
+		issue.title = args.title
+		
+		# Set description
+		if (args.description):
+			issue.description = args.description
+
+	if (issue):
+		# Generate an issue ID and then write the issue file to disk
+		issueID = identifiers.genNewIssueID()
+		IssueFile.writeIssueToDisk(config.ISSUES_DIR + "/" + str(issueID), 
+								   issue)
+		
+		# Display the new issue ID to the user
+		print str(issueID)
