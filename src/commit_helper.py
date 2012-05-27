@@ -21,9 +21,11 @@ def cleanWcAndCommitIssue(issueID, issue):
 	getCmd("git add " + config.ISSUES_DIR + "/" + issueID)
 	
 	# Get the name of the calling subcommand
-	# See: http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python
-	cmdName = inspect.getmodule(
-					(inspect.stack()[1])[0]
+	# For more info on the basic idea see: http://stackoverflow.com/questions/1095543/get-name-of-calling-functions-module-in-python
+	# From the above, we're additionally grabbing the lowest level
+	# module name in the event that the command module was imported
+	# as part of a package (which is the case with our subcmds)
+	cmdName = inspect.getmodule((inspect.stack()[1])[0]
 					).__name__.split('.')[-1]
 
 	# Commit the issue
