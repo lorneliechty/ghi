@@ -94,6 +94,22 @@ class IssueFile:
 
 		f.closed
 		return issue
+	
+	@staticmethod
+	def peakTitle(filepath):
+		my = IssueFile
+		with open(filepath, 'rb') as f:
+			# Verify file type
+			buf = f.readline().strip()
+			if buf != my.FILE_TAG:
+				print "FAIL!", buf
+				return None
+			
+			# Status
+			f.readline().strip()
+			
+			# Title
+			return f.readline().strip()
 		
 
 def test():

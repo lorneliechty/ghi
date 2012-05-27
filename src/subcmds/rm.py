@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
 from identifiers import getFullIssueIdFromLeadingSubstr
-from subprocess_helper import getCmd
-import config
+import commit_helper
 
 NAME = "rm"
 HELP = "Remove an issue"
@@ -15,7 +14,5 @@ class Args:
 def execute(args):
 	if (args.id):
 		issueID = getFullIssueIdFromLeadingSubstr(args.id)
-		getCmd("git rm " + config.ISSUES_DIR + "/" + issueID)		
-
-if (__name__ == "__main__"):
-	execute()
+		commit_helper.cleanWcAndDeleteIssue(issueID)
+		
