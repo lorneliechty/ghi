@@ -1,0 +1,9 @@
+ISSUE-1
+0
+Improve readability of Issues when viewed in gitk / gitx and other gui git history viewers
+Despite the fact that the .ghi directory is supposed to be generally hidden... it isn't.
+It's a fact of life since we're not baked into git under the .git directory.
+However, I don't see this as a big problem because we can get huge advantages from having the Issue files be visible from within these very well-written, popular tools.
+
+To get these advantages though, we need to make the Issue file format user friendly & readable within this format.
+Although we probably won't even encourage hand-editing these files, making them easy to read can only be a plus for us.
