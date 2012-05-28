@@ -19,15 +19,35 @@ def _getCallerModuleName():
 	return inspect.getmodule((inspect.stack()[2])[0]
 					).__name__.split('.')[-1]
 
-def cleanWcAndCommitIssue(issueID, issue):
-	'''Cleans the git working copy and creates a git commit for an 
-	individual issue'''
-	issuePath = config.ISSUES_DIR + "/" + issueID
-	
+def _stashWc():
 	# Adding an issue includes adding a new commit to the repository.
 	# To make sure that our commit doesn't include anything other
 	# than this issue, clean the working copy using git-stash
 	getCmd("git stash --all")
+
+def _restoreWc():
+	# Now restore the working copy
+	getCmd("git stash pop")
+
+def cleanWcAndCommitGhiDir(msg):
+	'''Cleans the git working copy and creates a git commit for the
+	whole .ghi directory'''
+	
+	_stashWc()
+	
+	getCmd("git add " + config.GHI_DIR)
+	
+	cmdName = _getCallerModuleName()
+	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
+	
+	_restoreWc()
+
+def cleanWcAndCommitIssue(issueID, issue):
+	'''Cleans the git working copy and creates a git commit for an 
+	individual issue'''
+	issuePath = config.ISSUES_DIR + "/" + issueID
+
+	_stashWc()
 	
 	# Write the issue file to disk
 	IssueFile.writeIssueToDisk(issuePath, issue)
@@ -40,19 +60,15 @@ def cleanWcAndCommitIssue(issueID, issue):
 	getCmd('git commit -m "ghi-' + cmdName 
 		+ ' Issue #' + issueID[:7] + ': ' + issue.title + '"')
 	
-	# Now restore the working copy
-	getCmd("git stash pop")
-
+	_restoreWc()
+	
 def cleanWcAndDeleteIssue(issueID):
 	'''Cleans the git working copy and creates a git commit for an 
 	individual issue'''
 	issuePath = config.ISSUES_DIR + "/" + issueID
 	issueTitle = IssueFile.peakTitle(issuePath)
 	
-	# Adding an issue includes adding a new commit to the repository.
-	# To make sure that our commit doesn't include anything other
-	# than this issue, clean the working copy using git-stash
-	getCmd("git stash --all")
+	_stashWc()
 	
 	# Delete the issue
 	getCmd("git rm " + issuePath)		
@@ -62,6 +78,5 @@ def cleanWcAndDeleteIssue(issueID):
 	getCmd('git commit -m "ghi-' + cmdName 
 		+ ' Issue #' + issueID[:7] + ': ' + issueTitle + '"')
 	
-	# Now restore the working copy
-	getCmd("git stash pop")
+	_restoreWc()
 	
