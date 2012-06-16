@@ -10,7 +10,8 @@ git issue <ref>[..<ref>]
 git issue -p <priority>
 git issue -a "author" 
 git issue -- path/to/src/
-git issue 
+git issue --group			# list groups this issue belongs to
+git issue
 
 # Add a new issues
 git issue add "Title" -d "Description"
@@ -21,7 +22,10 @@ git issue edit <id> -t "Title"
 # Remove an issue
 git issue rm <id>	# resolves as closed?
 
-git issue ???
+# Organize issues
+git issue group						# list all groups in working copy 
+git issue group <ref>				# list all groups under a git ref
+git issue group <id> "group-name"	# put an issue in an existing group
 
 Helper commands of git issue edit
 ---------------------------------
