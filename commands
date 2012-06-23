@@ -14,7 +14,7 @@ git issue --group			# list groups this issue belongs to
 git issue
 
 # Add a new issues
-git issue add "Title" -d "Description"
+git issue add "Title" -d "Description" -g <groupname>
 
 # Edit an existing issue
 git issue edit <id> -t "Title"

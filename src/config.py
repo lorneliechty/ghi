@@ -35,6 +35,13 @@ class _Module:
 		return self._ISSUES_DIR
 	
 	@property
+	def GROUPS_DIR(self):
+		'''Get the root directory for all ghi issue groups'''
+		if not hasattr(self, '_GROUPS_DIR'):
+			self._GROUPS_DIR = self.GHI_DIR + '/groups' 
+		return self._GROUPS_DIR
+	
+	@property
 	def GIT_EDITOR(self):
 		'''Get the root directory for all ghi files'''
 		from subprocess_helper import getCmd
@@ -49,6 +56,7 @@ class _Module:
 GIT_ROOT = _Module.GIT_ROOT
 GHI_DIR = _Module.GHI_DIR
 ISSUES_DIR = _Module.ISSUES_DIR
+GROUPS_DIR = _Module.GROUPS_DIR
 
 GIT_EDITOR = _Module.GIT_EDITOR
 

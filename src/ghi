@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from compiler.ast import Sub
 import argparse
 import subcmds
 import sys
@@ -27,7 +28,7 @@ cmd_init.add_argument(subcmds.init.Args.OPT_GHI_PATH,
 
 cmd_init.set_defaults(func=subcmds.init.execute)
 
-# Create the 'list' command parser
+# Create the 'ls' command parser
 cmd_ls = cmds.add_parser(subcmds.ls.NAME,
 						   help=subcmds.ls.HELP)
 
@@ -36,11 +37,19 @@ cmd_ls.add_argument(subcmds.ls.Args.ID,
 					nargs=subcmds.ls.Args.ID_NARGS,
 					default=subcmds.ls.Args.ID_DEFAULT)
 
+cmd_ls.add_argument(subcmds.ls.Args.OPT_GROUPED,
+					action=subcmds.ls.Args.OPT_GROUPED_ACTION,
+					help=subcmds.ls.Args.OPT_GROUPED_HELP)
+
 cmd_ls.set_defaults(func=subcmds.ls.execute)
 
 # Create the 'add' command parser
 cmd_add = cmds.add_parser(subcmds.add.NAME,
 						  help=subcmds.add.HELP)
+
+cmd_add.add_argument(subcmds.add.Args.OPT_GROUP_SHORT,
+					 subcmds.add.Args.OPT_GROUP,
+					 help=subcmds.add.Args.OPT_GROUP_HELP)
 
 cmd_add.add_argument(subcmds.add.Args.TITLE,
 					 nargs=subcmds.add.Args.TITLE_NARGS,
@@ -50,7 +59,7 @@ cmd_add.add_argument(subcmds.add.Args.OPT_DESCRIPTION_SHORT,
 					 subcmds.add.Args.OPT_DESCRIPTION,
 					 help=subcmds.add.Args.OPT_DESCRIPTION_HELP)
 
-cmd_add.set_defaults(func=subcmds.add.execute);
+cmd_add.set_defaults(func=subcmds.add.execute)
 
 # Create the 'edit' command parser
 cmd_edit = cmds.add_parser(subcmds.edit.NAME,
@@ -67,7 +76,7 @@ cmd_edit.add_argument(subcmds.edit.Args.OPT_DESCRIPTION_SHORT,
 					  subcmds.edit.Args.OPT_DESCRIPTION,
 					  help=subcmds.edit.Args.OPT_DESCRIPTION_HELP)
 
-cmd_edit.set_defaults(func=subcmds.edit.execute);
+cmd_edit.set_defaults(func=subcmds.edit.execute)
 
 
 # Create the 'rm' command parser
@@ -79,18 +88,45 @@ cmd_rm.add_argument(subcmds.rm.Args.ID,
 
 cmd_rm.set_defaults(func=subcmds.rm.execute)
 
+# Create the 'group' command parser
+cmd_group = cmds.add_parser(subcmds.group.NAME, help=subcmds.group.HELP)
+
+cmd_group.add_argument(subcmds.group.Args.ID,
+					help=subcmds.group.Args.ID_HELP,
+					nargs=subcmds.group.Args.ID_NARGS)
+
+cmd_group.add_argument(subcmds.group.Args.GROUPNAME,
+					help=subcmds.group.Args.GROUPNAME_HELP,
+					nargs=subcmds.group.Args.GROUPNAME_NARGS)
+
+cmd_group.add_argument(subcmds.group.Args.OPT_DELETE_SHORT,
+					help=subcmds.group.Args.OPT_DELETE_HELP)
+
+cmd_group.set_defaults(func=subcmds.group.execute)
+
 # Quick sanity check to see if any subcommand was given at all
 posarg = False
 for i, arg in enumerate(sys.argv):
 	if (i != 0 and str(arg)[0] != '-'):
 		posarg = True
+		break
+
+optarg = False
+if len(sys.argv) > 1:
+	if not (sys.argv.count("-h") or sys.argv.count("--help") or 
+			sys.argv.count("--version")):
+		optarg = True
 
 # Make the default subcommand 'ls'
 if (posarg == False):
-	args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
+	if optarg:
+		args = parser.parse_args(sys.argv.insert(
+									len(sys.argv)-1,subcmds.ls.NAME))
+	else:
+		args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
 	args = parser.parse_args()
-
+	
 if (args.version):
 	printVersion()
 else:

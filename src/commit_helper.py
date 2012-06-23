@@ -28,6 +28,21 @@ def _stashWc():
 def _restoreWc():
 	# Now restore the working copy
 	getCmd("git stash pop")
+	
+def prepForCommit():
+	_stashWc()
+	
+def commit(msg):
+	cmdName = _getCallerModuleName()
+	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
+	
+	_restoreWc()
+	
+def addToIndex(path):
+	getCmd("git add " + path)
+
+def remove(path):
+	getCmd("git rm " + path)
 
 def cleanWcAndCommitGhiDir(msg):
 	'''Cleans the git working copy and creates a git commit for the
@@ -41,42 +56,3 @@ def cleanWcAndCommitGhiDir(msg):
 	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
 	
 	_restoreWc()
-
-def cleanWcAndCommitIssue(issueID, issue):
-	'''Cleans the git working copy and creates a git commit for an 
-	individual issue'''
-	issuePath = config.ISSUES_DIR + "/" + issueID
-
-	_stashWc()
-	
-	# Write the issue file to disk
-	IssueFile.writeIssueToDisk(issuePath, issue)
-	
-	# Add the issue to the git index
-	getCmd("git add " + issuePath)
-	
-	# Commit the issue
-	cmdName = _getCallerModuleName()
-	getCmd('git commit -m "ghi-' + cmdName 
-		+ ' Issue #' + issueID[:7] + ': ' + issue.title + '"')
-	
-	_restoreWc()
-	
-def cleanWcAndDeleteIssue(issueID):
-	'''Cleans the git working copy and creates a git commit for an 
-	individual issue'''
-	issuePath = config.ISSUES_DIR + "/" + issueID
-	issueTitle = IssueFile.peakTitle(issuePath)
-	
-	_stashWc()
-	
-	# Delete the issue
-	getCmd("git rm " + issuePath)		
-	
-	# Commit the change
-	cmdName = _getCallerModuleName()
-	getCmd('git commit -m "ghi-' + cmdName 
-		+ ' Issue #' + issueID[:7] + ': ' + issueTitle + '"')
-	
-	_restoreWc()
-	

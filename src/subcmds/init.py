@@ -29,6 +29,13 @@ def execute(args):
 		# track the directory in git before any issues get added
 		getCmd("touch " + config.ISSUES_DIR + "/.gitignore")
 		bFileAdd = True
+
+	if os.path.isdir(config.GROUPS_DIR) == False:
+		os.makedirs(config.GROUPS_DIR)
+		# Touch a .gitignore file in the GROUPS_DIR so that we can
+		# track the directory in git before any issues get added
+		getCmd("touch " + config.GROUPS_DIR + "/.gitignore")
+		bFileAdd = True
 	
 	if bFileAdd:
 		commit_helper.cleanWcAndCommitGhiDir("Initializing ghi")

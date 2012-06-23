@@ -5,18 +5,22 @@ import config
 import dircache
 
 def genNewIssueID():
-    return uuid.uuid4()
+	return uuid.uuid4()
 
 def getFullIssueIdFromLeadingSubstr(substr):
-    '''Returns the full ID string for a given leading substring.
-    Returns None if the substring is not found in any known Issue
-    ID.'''
-    if (substr == None):
-        return None
-    
-    #Get the list of all IDs
-    for issueID in dircache.listdir(config.ISSUES_DIR):
-        if (issueID.find(substr,0,len(substr)) == 0):
-            return issueID
-    
-    return None
+	'''Returns the full ID string for a given leading substring.
+	Returns None if the substring is not found in any known Issue
+	ID.'''
+	if (substr == None):
+		return None
+	
+	#Get the list of all IDs
+	for issueID in dircache.listdir(config.ISSUES_DIR):
+		if (issueID.find(substr,0,len(substr)) == 0):
+			return issueID
+	
+	return None
+
+def getPathFromId(identifier):
+	# For now assume that this is an issue
+	return config.ISSUES_DIR + "/" + identifier

@@ -6,6 +6,8 @@ import identifiers
 import subprocess
 from subprocess_helper import getCmd
 import commit_helper
+from commit_helper import addToIndex
+import group_helper
 
 NAME="add"
 HELP="Add a new issue"
@@ -19,6 +21,10 @@ class Args:
 	OPT_DESCRIPTION="--description"
 	OPT_DESCRIPTION_SHORT="-d"
 	OPT_DESCRIPTION_HELP="Description"
+	
+	OPT_GROUP="--group"
+	OPT_GROUP_SHORT="-g"
+	OPT_GROUP_HELP="Group name"
 
 def execute(args):
 	issue = None
@@ -57,7 +63,21 @@ def execute(args):
 	if (issue):
 		# Generate an issue ID
 		issueID = str(identifiers.genNewIssueID())
-		commit_helper.cleanWcAndCommitIssue(issueID, issue)
+		
+		# Clean index for commit
+		commit_helper.prepForCommit()
+		
+		# Make changes to index for commit
+		issuepath = config.ISSUES_DIR + "/" + issueID
+		IssueFile.writeIssueToDisk(issuepath, issue)
+		commit_helper.addToIndex(issuepath)
+		
+		if args.group:
+			group_helper.addIssueToGroup(issueID, args.group)
+			commit_helper.addToIndex(config.GROUPS_DIR + "/" + args.group)
+		
+		# Commit
+		commit_helper.commit('Issue #' + issueID[:7] + ': ' + issue.title)
 		
 		# Display the new issue ID to the user
 		print issueID
