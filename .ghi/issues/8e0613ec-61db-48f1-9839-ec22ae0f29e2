@@ -1,0 +1,13 @@
+ISSUE-1
+0
+Improve issue fix workflow
+Should be able to bundle the ghi issue update for the fix into the commit that contains the actual code changes for teh fix without having to know any git ninjutsu.
+
+Example workflow:
+-------------------------
+git issue add "bug where something bad happens"   <-- results in an auto-commit
+[code fixes]
+git issue edit -s fixed <issueID>
+git commit
+
+Maybe it would be best if all ghi operations didn't auto-commit. Maybe add "-c" option to each command to execute an auto-commit.
