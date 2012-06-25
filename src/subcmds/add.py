@@ -64,9 +64,6 @@ def execute(args):
 		# Generate an issue ID
 		issueID = str(identifiers.genNewIssueID())
 		
-		# Clean index for commit
-		commit_helper.prepForCommit()
-		
 		# Make changes to index for commit
 		issuepath = config.ISSUES_DIR + "/" + issueID
 		IssueFile.writeIssueToDisk(issuepath, issue)
@@ -75,9 +72,6 @@ def execute(args):
 		if args.group:
 			group_helper.addIssueToGroup(issueID, args.group)
 			commit_helper.addToIndex(config.GROUPS_DIR + "/" + args.group)
-		
-		# Commit
-		commit_helper.commit('Issue #' + issueID[:7] + ': ' + issue.title)
 		
 		# Display the new issue ID to the user
 		print issueID

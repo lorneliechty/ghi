@@ -40,14 +40,8 @@ def execute(args):
 		# We don't support this syntax yet
 		return None
 	
-	# Prep for commit
-	commit_helper.prepForCommit()
-	
 	# get the full issue ID & Add the issue to the group
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
 	group_helper.addIssueToGroup(issueID, args.groupname)
 	commit_helper.addToIndex(group_helper.getPathForGroup(args.groupname))
 	
-	# Commit the changes
-	commit_helper.commit('Issue #' + issueID[:7] 
-						+ " added to group '" + args.groupname + "'")

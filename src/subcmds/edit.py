@@ -50,14 +50,8 @@ def execute(args):
 		if (args.description):
 			issue.description = args.description
 		
-		# Clean index for commit
-		commit_helper.prepForCommit()
-		
 		# Make changes to index for commit
 		issuepath = config.ISSUES_DIR + "/" + issueID
 		IssueFile.writeIssueToDisk(issuepath, issue)
 		commit_helper.addToIndex(issuepath)
-		
-		# Commit
-		commit_helper.commit('Issue #' + issueID[:7] + ': ' + issue.title)
 		

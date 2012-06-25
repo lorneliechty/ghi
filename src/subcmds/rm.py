@@ -19,9 +19,6 @@ def execute(args):
 		issuePath = getPathFromId(issueID)
 		issueTitle = IssueFile.peakTitle(issuePath)
 		
-		# Prep for commit
-		commit_helper.prepForCommit()
-		
 		# Remove the issue
 		commit_helper.remove(issuePath)
 		
@@ -33,7 +30,4 @@ def execute(args):
 			# Should be executing a git command here to add the
 			# subsequent group changes to the index, but I'm taking
 			# a shortcut for the moment
-		
-		# Commit the changes
-		commit_helper.commit('Issue #' + issueID[:7] + ': ' + issueTitle)
 		

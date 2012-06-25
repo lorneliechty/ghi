@@ -1,9 +1,10 @@
 	#! /usr/bin/env python
 
-import config
-import os
 from subprocess_helper import getCmd
 import commit_helper
+import config
+import os
+import sys
 
 NAME="init"
 HELP="give git issues"
@@ -41,10 +42,15 @@ def execute(args):
 		commit_helper.cleanWcAndCommitGhiDir("Initializing ghi")
 
 	# Alias "git issue" to ghi
-	if (args.ghi_path):
+	if args.ghi_path:
 		getCmd("git config alias.issue '!" + args.ghi_path + "'")
 	else:
 		getCmd("git config alias.issue '!ghi'")
+		
+	# Insert git hooks
+	ghicmdpath = getCmd("git config alias.issue")[1:-4]
+	getCmd("cp " + ghicmdpath + "/hooks/prepare-commit-msg "
+				+ config.GIT_ROOT + "/.git/hooks/")
 		
 	# Clever successful response message... in the future it would
 	# be nice if running 'ghi-init' on a git that already has issues

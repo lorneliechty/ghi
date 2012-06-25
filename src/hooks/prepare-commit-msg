@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Don't add our messages if we're using a commit message supplied from -m / -f or a merge
+if [[ $2 != "message" && $2 != "merge" ]]; then
+	GHI_DIR=`git config alias.issue | cut -c 2- | sed s/.ghi$//`
+	export PYTHONPATH=$GHI_DIR:$PYTHONPATH
+	python $GHI_DIR/hookscripts/prepare_commit_msg.py $1
+fi
