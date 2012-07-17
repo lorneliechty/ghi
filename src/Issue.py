@@ -99,16 +99,6 @@ class Issue(IssueProto):
 		self.setDescription(tmp.getDescription())
 		
 	def _loadDates(self):
-#			cmd = ('git rev-list'
-#				+ ' --topo-order'
-#				+ ' --reverse'
-#				+ ' --timestamp'
-#				+ ' HEAD'
-#				+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
-#			commits = getCmd(cmd).split('\n')
-#			if commits:
-#				self._created = commits[0].split()[0]
-#				self._modified = commits[-1].split()[0]
 			cmd = ('git log'
 				+ ' --topo-order'
 				+ ' --reverse'
