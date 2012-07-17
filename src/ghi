@@ -34,8 +34,7 @@ cmd_ls = cmds.add_parser(subcmds.ls.NAME,
 
 cmd_ls.add_argument(subcmds.ls.Args.ID,
 					help=subcmds.ls.Args.ID_HELP,
-					nargs=subcmds.ls.Args.ID_NARGS,
-					default=subcmds.ls.Args.ID_DEFAULT)
+					nargs=subcmds.ls.Args.ID_NARGS)
 
 cmd_ls.add_argument(subcmds.ls.Args.OPT_GROUPED,
 					action=subcmds.ls.Args.OPT_GROUPED_ACTION,
@@ -106,10 +105,19 @@ cmd_group.set_defaults(func=subcmds.group.execute)
 
 # Quick sanity check to see if any subcommand was given at all
 posarg = False
+cmd_names = [
+	subcmds.add.NAME,
+	subcmds.edit.NAME,
+	subcmds.group.NAME,
+	subcmds.init.NAME,
+	subcmds.ls.NAME,
+	subcmds.rm.NAME
+	]
 for i, arg in enumerate(sys.argv):
 	if (i != 0 and str(arg)[0] != '-'):
-		posarg = True
-		break
+		if cmd_names.count(arg) > 0:
+			posarg = True
+			break
 
 optarg = False
 if len(sys.argv) > 1:
@@ -126,7 +134,7 @@ if (posarg == False):
 		args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
 	args = parser.parse_args()
-	
+
 if (args.version):
 	printVersion()
 else:

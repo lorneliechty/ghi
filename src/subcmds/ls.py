@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 
-from color import Color
 from group_helper import getIssueIdsInGroups
-from issue import IssueFile
+from issue import IssueDisplayBuilder
 import config
 import dircache
+import identifiers
 
 NAME = "ls"
 HELP = "List issues"
@@ -14,45 +14,50 @@ class Args:
 	ID="id"
 	ID_HELP="Issue ID"
 	ID_NARGS="?"
-	ID_DEFAULT="*"
 	
 	OPT_GROUPED="--group"
 	OPT_GROUPED_HELP="List issues by group"
 	OPT_GROUPED_ACTION="store_true"
 
 def execute(args):
-	if args.group:
-		groups = getIssueIdsInGroups()
-	
-	issueIDs = dircache.listdir(config.ISSUES_DIR)
+	if args.id:
+		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+		print IssueDisplayBuilder(issueId).getFullIssueDisplay()
+
+	else:
+		issueIDs = dircache.listdir(config.ISSUES_DIR)
+
+		if args.group:
+			_displayGrouped(issueIDs)		
+		else:
+			_displayUnGrouped(issueIDs)
+			
+def _displayUnGrouped(issueIDs):
+	for issueID in issueIDs:	
+		print IssueDisplayBuilder(issueID).getOneLineStr()
+
+def _displayGrouped(issueIDs):
+	groups = getIssueIdsInGroups()
 
 	ungrouped = []
-	if args.group:
-		for id in issueIDs:
-			isUngrouped = True
-			for g in groups:
-				if groups[g].count(id):
-					isUngrouped = False
-					break
-			if isUngrouped:
-				ungrouped.extend([id])
-	
-	if args.group:
-		for i,g in enumerate(groups):
-			print g
-			for id in groups[g]:
-				displayIssue(id)
-			print ""
-		
-		print "ungrouped"
-		for id in ungrouped: displayIssue(id)
-		
-	else:
-		for id in issueIDs:	displayIssue(id)
+	for issueID in issueIDs:
+		isUngrouped = True
+		for g in groups:
+			if groups[g].count(issueID):
+				isUngrouped = False
+				break
+		if isUngrouped:
+			ungrouped.extend([issueID])
 
-def displayIssue(id):
-	print str(Color('yellow')) + id[:7] + str(Color('none')) + \
-			"\t" + IssueFile.peakTitle(config.ISSUES_DIR + "/" + id)
+	for g in groups:
+		print g
+		for issueID in groups[g]:
+			print IssueDisplayBuilder(issueID).getOneLineStr()
+		print ""
+	
+	print "ungrouped"
+	for issueID in ungrouped: 
+		print IssueDisplayBuilder(issueID).getOneLineStr()
 
 if (__name__ == "__main__"):
 	execute()

@@ -4,7 +4,6 @@ from subprocess_helper import getCmd
 import commit_helper
 import config
 import os
-import sys
 
 NAME="init"
 HELP="give git issues"

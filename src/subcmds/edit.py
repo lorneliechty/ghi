@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
 from issue import IssueFile
+from subprocess_helper import getCmd
+import commit_helper
 import config
 import identifiers
 import subprocess
-import commit_helper
 
 NAME="edit"
 HELP="Edit an existing issue"
@@ -38,20 +39,25 @@ def execute(args):
 	if (args.title == None and args.description == None):
 		tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
 		IssueFile.writeEditableIssueToDisk(tmpFile, issue)
+		tmpFileHash = getCmd("git hash-object " + tmpFile)
+
 		subprocess.call([config.GIT_EDITOR, tmpFile])
 		issue = IssueFile.readEditableIssueFromDisk(tmpFile)
 		
-	else:
-		# Set title
-		if (args.title):
-			issue.title = args.title
+		# Check to see if the tmpFile is unchanged
+		if (tmpFileHash == getCmd("git hash-object " + tmpFile)):
+			print "No change in Issue data. Issue not updated"
+			return None
 		
-		# Set description
-		if (args.description):
-			issue.description = args.description
-		
-		# Make changes to index for commit
-		issuepath = config.ISSUES_DIR + "/" + issueID
-		IssueFile.writeIssueToDisk(issuepath, issue)
-		commit_helper.addToIndex(issuepath)
-		
+	# Set title
+	if (args.title):
+		issue.title = args.title
+	
+	# Set description
+	if (args.description):
+		issue.description = args.description
+	
+	# Make changes to index for commit
+	issuepath = config.ISSUES_DIR + "/" + issueID
+	IssueFile.writeIssueToDisk(issuepath, issue)
+	commit_helper.addToIndex(issuepath)

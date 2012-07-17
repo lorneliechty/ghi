@@ -1,13 +1,12 @@
 #! /usr/bin/env python
 
-from issue import Issue, IssueFile
-import config
-import identifiers
-import subprocess
+from issue import Issue, IssueFile, IssueProto
 from subprocess_helper import getCmd
 import commit_helper
-from commit_helper import addToIndex
+import config
 import group_helper
+import identifiers
+import subprocess
 
 NAME="add"
 HELP="Add a new issue"
@@ -33,7 +32,7 @@ def execute(args):
 	if (args.title == None and args.description == None):
 		# If no arguments, drop into interactive mode
 		tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
-		issue = Issue()
+		issue = IssueProto()
 		IssueFile.writeEditableIssueToDisk(tmpFile, issue)
 		tmpFileHash = getCmd("git hash-object " + tmpFile)
 		

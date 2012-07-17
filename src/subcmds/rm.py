@@ -2,7 +2,7 @@
 
 from group_helper import getGroupsForIssueId, rmIssueInGroup
 from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
-from issue import IssueFile
+from issue import Issue
 import commit_helper
 
 NAME = "rm"
@@ -17,7 +17,7 @@ def execute(args):
 	if (args.id):
 		issueID = getFullIssueIdFromLeadingSubstr(args.id)
 		issuePath = getPathFromId(issueID)
-		issueTitle = IssueFile.peakTitle(issuePath)
+		issueTitle = Issue(issueID).getTitle()
 		
 		# Remove the issue
 		commit_helper.remove(issuePath)

@@ -1,12 +1,211 @@
 #! /usr/bin/env python
+from color import Color
+from subprocess_helper import getCmd
 import config
 
-class Issue:
+class IssueProto:
 	"""Class that represents an Issue"""
-	title = r""
-	description = r""
+	
+	def getTitle(self):
+		if not hasattr(self,'_title'):
+			return r""
+		return self._title
+	
+	def setTitle(self, title):
+		self._title = title
+	
+	def getDescription(self):
+		if not hasattr(self, '_description'):
+			return r""
+		return self._description
+	
+	def setDescription(self, description):
+		self._description = description
+	
+	def getStatus(self):
+		if not hasattr(self, '_status'):
+			return 0
+		return self._status
+	
+	def setStatus(self, status):
+		self._status = status
+	
+class Issue(IssueProto):
+	def __init__(self, identifier):
+		self._id = identifier
+		
+	def getId(self):
+		return self._id
+	
+	def getTitle(self, peak=True):
+		if not hasattr(self, '_title'):
+			if peak:
+				self._title = IssueFile.peakTitle(
+					config.ISSUES_DIR + '/' + self.getId())
+			else:
+				self._loadIssueFile()
+		return IssueProto.getTitle(self)
+	
+	def getDescription(self):
+		if not hasattr(self, '_description'):
+			self._loadIssueFile()
+		return IssueProto.getDescription(self)
+	
+	def getStatus(self):
+		if not hasattr(self, '_status'):
+			self._loadIssueFile()
+		return IssueProto.getStatus(self)
+	
+	# Lazy load scm-based issue metadata so that we don't take
+	# the performance hit of querying this data if we don't
+	# have to.
+	def getCreatedDate(self):
+		'''Date on which the issue was first committed into the repository'''
+		if not hasattr(self, '_createdDate'):
+			self._loadDates()
+		return self._createdDate
+	
+	def getCreatedAuthorName(self):
+		if not hasattr(self, '_createdAuthorName'):
+			self._loadDates()
+		return self._createdAuthorName
+	
+	def getCreatedAuthorEmail(self):
+		if not hasattr(self, '_createdAuthorEmail'):
+			self._loadDates()
+		return self._createdAuthorEmail
+	
+	def getModifiedDate(self):
+		'''Date on which the issue was last modified in the repository'''
+		if not hasattr(self, '_modifiedDate'):
+			self._loadDates()
+		return self._modifiedDate
+	
+	def getModifiedAuthorName(self):
+		if not hasattr(self, '_modifiedAuthorName'):
+			self._loadDates()
+		return self._modifiedAuthorName
+	
+	def getModifiedAuthorEmail(self):
+		if not hasattr(self, '_modifiedAuthorEmail'):
+			self._loadDates()
+		return self._modifiedAuthorEmail
+	
+	def _loadIssueFile(self):
+		tmp = IssueFile.readIssueFromDisk(
+			config.ISSUES_DIR + '/' + self._id)
+		self.setTitle(tmp.getTitle())
+		self.setStatus(tmp.getStatus())
+		self.setDescription(tmp.getDescription())
+		
+	def _loadDates(self):
+#			cmd = ('git rev-list'
+#				+ ' --topo-order'
+#				+ ' --reverse'
+#				+ ' --timestamp'
+#				+ ' HEAD'
+#				+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
+#			commits = getCmd(cmd).split('\n')
+#			if commits:
+#				self._created = commits[0].split()[0]
+#				self._modified = commits[-1].split()[0]
+			cmd = ('git log'
+				+ ' --topo-order'
+				+ ' --reverse'
+				+ ' --pretty=format:"%H %at %an %ae"'
+				+ ' HEAD'
+				+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
+			commits = getCmd(cmd).split('\n')
+			if commits:
+				self._createdDate = 		commits[0].split()[1]
+				self._createdAuthorName = 	commits[0].split()[2]
+				self._createdAuthorEmail = 	commits[0].split()[3]
 
-	status = 0
+				self._modifiedDate = 		commits[-1].split()[1]
+				self._modifiedAuthorName = 	commits[-1].split()[2]
+				self._modifiedAuthorEmail = commits[-1].split()[3]
+
+
+class IssueDisplayBuilder:
+	def __init__(self, identifier):
+		self._issue = Issue(identifier)
+	
+	def getFullIssueDisplay(self):
+		lines = []
+		lines.extend([str(Color('yellow')) + 
+					"Issue ID: " + self.getIdStr() + '\n'])
+		
+		lines.extend([str(Color('none')) +
+					"Created: " + self.getCreatedDateStr() + '\t' +
+					"Author: " + self.getCreatedAuthorStr() + '\n'])
+				
+		lines.extend([str(Color('none')) +
+					"Modified: " + self.getModifiedDateStr() + '\t' +
+					"Author: " + self.getModifiedAuthorStr() + '\n'])
+				
+		lines.extend([str(Color('none')) +
+					"Status: " + self.getStatusStr() + '\n'])
+		
+		lines.extend(['\n'])
+		lines.extend([str(Color('none')) + 
+					"Title: " + self.getTitle() + '\n'])
+		lines.extend(['-' * 80])
+		
+		lines.extend(['\n'])
+		lines.extend(str(Color('none')) +
+					self.getDescription())
+		
+		line = ""
+		for l in lines: 
+			line += l
+		
+		return line
+	
+	def getOneLineStr(self):
+		return (str(Color('yellow')) + self.getShortIdStr() + 
+			str(Color('none')) + '\t' + self.getTitle())
+	
+	def getIdStr(self):
+		return self._issue.getId()
+	
+	def getShortIdStr(self):
+		return self._issue.getId()[:7]
+	
+	def getTitle(self):
+		return self._issue.getTitle(False)
+	
+	def getStatusStr(self):
+		if not hasattr(self,'_issue'):
+			self._loadFullIssue()
+		return config.STATUS_OPTS[int(self._issue.getStatus())]
+
+	def getDescription(self):
+		return self._issue.getDescription()
+				
+	def getCreatedDateStr(self):
+		return self._formatDateFromTimestamp(self._issue.getCreatedDate())
+	
+	def getModifiedDateStr(self):
+		return self._formatDateFromTimestamp(self._issue.getModifiedDate())
+	
+	def getCreatedAuthorStr(self):
+		return (self._issue.getCreatedAuthorName()
+			+ "<" + self._issue.getCreatedAuthorEmail() + ">")
+	
+	def getModifiedAuthorStr(self):
+		return (self._issue.getModifiedAuthorName()
+			+ "<" + self._issue.getModifiedAuthorEmail() + ">")
+	
+	def _formatDateFromTimestamp(self, timestamp):
+		import time
+		localtime = time.localtime(int(timestamp))
+		dateStr = str(localtime.tm_year)
+		dateStr += "-" + str(localtime.tm_mon)
+		dateStr += "-" + str(localtime.tm_mday)
+		dateStr += " " + str(localtime.tm_hour)
+		dateStr += ":" + str(localtime.tm_min)
+		dateStr += ":" + str(localtime.tm_sec)
+		return dateStr
 
 class IssueFile:
 	"""Wraps all file I/O for Issues"""
@@ -18,15 +217,14 @@ class IssueFile:
 		my = IssueFile
 		with open(filepath, 'wb') as f:
 			f.write(my.FILE_TAG + my.FIELD_DELIM)
-			f.write(str(issue.status) + my.FIELD_DELIM)
-			f.write(issue.title + my.FIELD_DELIM)
-			f.write(issue.description + my.FIELD_DELIM)
-		f.closed
+			f.write(str(issue.getStatus()) + my.FIELD_DELIM)
+			f.write(issue.getTitle() + my.FIELD_DELIM)
+			f.write(issue.getDescription() + my.FIELD_DELIM)
 
 	@staticmethod
 	def readIssueFromDisk(filepath):
 		my = IssueFile
-		issue = Issue()
+		issue = IssueProto()
 		with open(filepath, 'rb') as f:
 			# Verify file type
 			buf = f.readline().strip()
@@ -35,18 +233,18 @@ class IssueFile:
 				return None
 			
 			# Status
-			issue.status = f.readline().strip()
+			issue.setStatus(f.readline().strip())
 			# Title
-			issue.title = f.readline().strip()
+			issue.setTitle(f.readline().strip())
 			
 			# All remaining lines in the file are the issue description
+			description = ""
 			lines = f.readlines()
 			for l in lines:
-				issue.description += l
+				description += l
 			# Remove any trailing new line
-			issue.description = issue.description.rstrip()
+			issue.setDescription(description.rstrip())
 
-		f.closed
 		return issue
 	
 	@staticmethod
@@ -54,7 +252,7 @@ class IssueFile:
 		with open(filepath, 'wb') as f:
 			# Title with helper comment
 			f.write('# TITLE: One line immediately below this comment' + '\n')
-			f.write(issue.title + '\n')
+			f.write(issue.getTitle() + '\n')
 			
 			# Status with helper comment
 			f.write("\n")
@@ -63,36 +261,35 @@ class IssueFile:
 			statusOpts = config.STATUS_OPTS
 			for val,status in statusOpts.iteritems():
 				f.write('#\t' + str(val) + ': ' + status + '\n')
-			f.write(str(issue.status) + '\n')
+			f.write(str(issue.getStatus()) + '\n')
 			
 			# Description with helper comment
 			f.write("\n")
 			f.write('# DESCRIPTION: All lines below this comment' + '\n')
-			f.write(issue.description + '\n')
-		f.closed
+			f.write(issue.getDescription() + '\n')
 
 	@staticmethod
 	def readEditableIssueFromDisk(filepath):
-		issue = Issue()
+		issue = IssueProto()
 		with open(filepath, 'rb') as f:
 			lines = f.readlines()
 			n = 0
+			description = ""
 			for l in lines:
 				if (l.find('#',0,1) == -1 
 					and (n > 2 or not len(l.rstrip()) == 0)):
 					
 					if (n==0):
-						issue.title = l.rstrip()
+						issue.setTitle(l.rstrip())
 					elif (n==1):
-						issue.status = l.rstrip()
+						issue.setStatus(l.rstrip())
 					else:
-						issue.description += l			
+						description += l			
 					n += 1
 																
 			# Remove any trailing new line
-			issue.description = issue.description.rstrip()
+			issue.setDescription(description.rstrip())
 
-		f.closed
 		return issue
 	
 	@staticmethod
@@ -110,17 +307,3 @@ class IssueFile:
 			
 			# Title
 			return f.readline().strip()
-		
-
-def test():
-	startIssue = Issue()
-	startIssue.title = "test issue title"
-	startIssue.description = "test issue description\ntest desc line 2"
-	print startIssue.status, startIssue.title, startIssue.description
-	IssueFile.writeIssueToDisk("/Users/lorne/dev/personal/ghi/src/test-issue", startIssue)
-	endIssue = IssueFile.readIssueFromDisk("/Users/lorne/dev/personal/ghi/src/test-issue")
-	print endIssue.status, endIssue.title, endIssue.description
-	#print startIssue.status, startIssue.title, startIssue.description
-
-if __name__ == "__main__":
-	test()
