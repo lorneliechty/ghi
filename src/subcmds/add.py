@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from issue import Issue, IssueFile, IssueProto
+from Issue import IssueProto, IssueFile, Issue
 from subprocess_helper import getCmd
 import commit_helper
 import config

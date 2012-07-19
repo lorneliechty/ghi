@@ -2,7 +2,7 @@
 
 from group_helper import getGroupsForIssueId, rmIssueInGroup
 from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
-from issue import Issue
+from Issue import Issue
 import commit_helper
 
 NAME = "rm"

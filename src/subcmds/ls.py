@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from group_helper import getIssueIdsInGroups
-from issue import IssueDisplayBuilder
+from Issue import IssueDisplayBuilder
 import config
 import dircache
 import identifiers
@@ -18,6 +18,9 @@ class Args:
 	OPT_GROUPED="--group"
 	OPT_GROUPED_HELP="List issues by group"
 	OPT_GROUPED_ACTION="store_true"
+	
+	OPT_SORT="--sort"
+	OPT_SORT_HELP="Sort issues"
 
 def execute(args):
 	if args.id:

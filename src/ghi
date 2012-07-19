@@ -40,6 +40,9 @@ cmd_ls.add_argument(subcmds.ls.Args.OPT_GROUPED,
 					action=subcmds.ls.Args.OPT_GROUPED_ACTION,
 					help=subcmds.ls.Args.OPT_GROUPED_HELP)
 
+cmd_ls.add_argument(subcmds.ls.Args.OPT_SORT,
+					help=subcmds.ls.Args.OPT_SORT)
+
 cmd_ls.set_defaults(func=subcmds.ls.execute)
 
 # Create the 'add' command parser

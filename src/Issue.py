@@ -152,8 +152,9 @@ class IssueDisplayBuilder:
 		return line
 	
 	def getOneLineStr(self):
-		return (str(Color('yellow')) + self.getShortIdStr() + 
-			str(Color('none')) + '\t' + self.getTitle())
+		return (str(Color('yellow')) + self.getShortIdStr() 
+			+ str(Color('none')) + '\t' + self.getStatusStr()
+			+ str(Color('none')) + '\t' + self.getTitle())
 	
 	def getIdStr(self):
 		return self._issue.getId()
