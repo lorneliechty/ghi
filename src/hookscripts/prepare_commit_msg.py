@@ -1,8 +1,7 @@
 #! /usr/bin/env python
+from Issue import IssueDisplayBuilder
 
 try:
-	from identifiers import getPathFromId
-	from issue import IssueFile
 	from subprocess_helper import getCmd
 	import config
 except:
@@ -73,19 +72,24 @@ def prependGhiCommitMsg(commitMsgFilepath):
 			f.write(line)
 
 def buildGhiAddMsg(issueID):
-	return "ghi-add Issue #" + issueID[:7] + ": " + IssueFile.peakTitle(getPathFromId(issueID))
+	issueDisp = IssueDisplayBuilder(issueID)
+	return "ghi-add Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle()
 
 def buildGhiEditMsg(issueID):
-	return "ghi-edit Issue #" + issueID[:7] + ": " + IssueFile.peakTitle(getPathFromId(issueID))
+	issueDisp = IssueDisplayBuilder(issueID)
+	return "ghi-edit Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle()
 
 def buildGhiRmMsg(issueID):
-	return "ghi-rm Issue #" + issueID[:7]
+	issueDisp = IssueDisplayBuilder(issueID)
+	return "ghi-rm Issue #" + issueDisp.getShortIdStr()
 
 def buildGhiGroupAddMsg(groupname, issueID):
-	return "ghi-group Issue #" + issueID[:7] + ' added to group "' + groupname + '"'
+	issueDisp = IssueDisplayBuilder(issueID)
+	return "ghi-group Issue #" + issueDisp.getShortIdStr() + ' added to group "' + groupname + '"'
 
 def buildGhiGroupRmMsg(groupname, issueID):
-	return "ghi-group Issue #" + issueID[:7] + ' removed from group "' + groupname + '"'
+	issueDisp = IssueDisplayBuilder(issueID)
+	return "ghi-group Issue #" + issueDisp.getShortIdStr() + ' removed from group "' + groupname + '"'
 
 if __name__ == "__main__":
 	import sys

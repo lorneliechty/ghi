@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from Issue import IssueProto, IssueFile, Issue
+from Issue import IssueProto, IssueFile
 from subprocess_helper import getCmd
 import commit_helper
 import config
@@ -50,14 +50,14 @@ def execute(args):
 	
 	else:
 		# Create new issue
-		issue = Issue();
+		issue = IssueProto();
 		
 		# Set title
-		issue.title = args.title
+		issue.setTitle(args.title)
 		
 		# Set description
 		if (args.description):
-			issue.description = args.description
+			issue.setDescription(args.description)
 
 	if (issue):
 		# Generate an issue ID

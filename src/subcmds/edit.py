@@ -51,11 +51,11 @@ def execute(args):
 		
 	# Set title
 	if (args.title):
-		issue.title = args.title
+		issue.setTitle(args.title)
 	
 	# Set description
 	if (args.description):
-		issue.description = args.description
+		issue.setDescription(args.description)
 	
 	# Make changes to index for commit
 	issuepath = config.ISSUES_DIR + "/" + issueID
