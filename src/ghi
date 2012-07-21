@@ -131,8 +131,7 @@ if len(sys.argv) > 1:
 # Make the default subcommand 'ls'
 if (posarg == False):
 	if optarg:
-		args = parser.parse_args(sys.argv.insert(
-									len(sys.argv)-1,subcmds.ls.NAME))
+		args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
 	else:
 		args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:

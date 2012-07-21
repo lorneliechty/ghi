@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-from group_helper import getIssueIdsInGroups
 from Issue import IssueDisplayBuilder
+from group_helper import getIssueIdsInGroups
+from subprocess_helper import getCmd
 import config
 import dircache
 import identifiers
@@ -30,11 +31,32 @@ def execute(args):
 	else:
 		issueIDs = dircache.listdir(config.ISSUES_DIR)
 
+		if args.sort != None:
+			issueIDs = _sortIssues(issueIDs, args.sort)
+
 		if args.group:
 			_displayGrouped(issueIDs)		
 		else:
 			_displayUnGrouped(issueIDs)
 			
+def _sortIssues(issueIDs, sortBy):
+	if sortBy != None and sortBy == 'status':
+		issuesPathPrefix = config.ISSUES_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
+
+		# Organize the issues into status groups
+		issuesWithStatus = []
+		for sk in config.STATUS_OPTS:
+			for i in getCmd('git grep -n ^' + str(sk) + '$ -- ' + config.ISSUES_DIR).splitlines():
+				issuesWithStatus.extend([[sk, i.split(':')[0][len(issuesPathPrefix) + 1:]]]) # +1 to remove '/'
+
+		# Sort by status
+		issuesWithStatus.sort(key=lambda issue: issue[0])
+		
+		# return sorted IDs
+		return map (lambda issueID: issueID[1], issuesWithStatus)
+	
+	return None
+		
 def _displayUnGrouped(issueIDs):
 	for issueID in issueIDs:	
 		print IssueDisplayBuilder(issueID).getOneLineStr()

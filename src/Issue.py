@@ -152,9 +152,16 @@ class IssueDisplayBuilder:
 		return line
 	
 	def getOneLineStr(self):
-		return (str(Color('yellow')) + self.getShortIdStr() 
-			+ str(Color('none')) + '\t' + self.getStatusStr()
-			+ str(Color('none')) + '\t' + self.getTitle())
+		clr_y = str(Color('yellow'))
+		clr_n = str(Color('none'))
+		
+		line = clr_y + self.getShortIdStr()
+		
+		stat = self.getStatusStr()
+		line += clr_n + '\t' + ((stat[:5] + '..') if len(stat) > 7 else stat)
+		line += clr_n + '\t' + self.getTitle()
+		
+		return line
 	
 	def getIdStr(self):
 		return self._issue.getId()
