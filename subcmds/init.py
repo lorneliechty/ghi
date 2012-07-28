@@ -42,7 +42,7 @@ def execute(args):
 
 	# Alias "git issue" to ghi
 	if args.ghi_path:
-		getCmd("git config alias.issue '!" + args.ghi_path + "'")
+		getCmd("git config alias.issue '!" + args.ghi_path + "/ghi'")
 	else:
 		getCmd("git config alias.issue '!ghi'")
 		
