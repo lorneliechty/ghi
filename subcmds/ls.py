@@ -30,7 +30,7 @@ def execute(args):
 
 	else:
 		issueIDs = _getAllIssueIDs()
-		if issueIDs == None:
+		if len(issueIDs) == 0:
 			return
 
 		if args.sort != None:
