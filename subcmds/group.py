@@ -21,13 +21,25 @@ class Args:
 	GROUPNAME_NARGS="?"
 	
 	OPT_DELETE_SHORT="-d"
-	OPT_DELETE_HELP="Delete a group"
+	OPT_DELETE_HELP="Delete an issue from a group or a group completely"
+	OPT_DELETE_ACTION="store_true"
 
 def execute(args):
 
-	if not args.d == None:
+	# Are we deleting an issue from an existing group?
+	if args.d and not args.id == None and not args.groupname == None:
+		issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+		group_helper.rmIssueInGroup(issueID, args.groupname)
+		# HACK HACK HACK
+		# Should be executing a git command here to add the
+		# subsequent group changes to the index, but I'm taking
+		# a shortcut for the moment
+		return None
+	
+	# Are we deleting a group completely?
+	elif args.d and args.id == None and not args.groupname == None:
 		getCmd("rm " + config.GROUPS_DIR + "/" + args.d)
-		return None		
+		return None
 	
 	if args.groupname == None and args.id == None:
 		for group in dircache.listdir(config.GROUPS_DIR):

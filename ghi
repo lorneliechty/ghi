@@ -4,6 +4,7 @@ from compiler.ast import Sub
 import argparse
 import subcmds
 import sys
+from argparse import Action
 
 GHI_VERSION = "0.0.1.1"
 def printVersion():
@@ -102,7 +103,8 @@ cmd_group.add_argument(subcmds.group.Args.GROUPNAME,
 					nargs=subcmds.group.Args.GROUPNAME_NARGS)
 
 cmd_group.add_argument(subcmds.group.Args.OPT_DELETE_SHORT,
-					help=subcmds.group.Args.OPT_DELETE_HELP)
+					help=subcmds.group.Args.OPT_DELETE_HELP,
+					action=subcmds.group.Args.OPT_DELETE_ACTION)
 
 cmd_group.set_defaults(func=subcmds.group.execute)
 
