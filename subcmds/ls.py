@@ -29,7 +29,9 @@ def execute(args):
 		print IssueDisplayBuilder(issueId).getFullIssueDisplay()
 
 	else:
-		issueIDs = dircache.listdir(config.ISSUES_DIR)
+		issueIDs = _getAllIssueIDs()
+		if issueIDs == None:
+			return
 
 		if args.sort != None:
 			issueIDs = _sortIssues(issueIDs, args.sort)
@@ -38,6 +40,11 @@ def execute(args):
 			_displayGrouped(issueIDs)		
 		else:
 			_displayUnGrouped(issueIDs)
+			
+def _getAllIssueIDs():
+	issueIDs = dircache.listdir(config.ISSUES_DIR)
+	issueIDs.remove('.gitignore')
+	return issueIDs
 			
 def _sortIssues(issueIDs, sortBy):
 	if sortBy != None and sortBy == 'status':
