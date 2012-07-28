@@ -43,7 +43,9 @@ def execute(args):
 			
 def _getAllIssueIDs():
 	issueIDs = dircache.listdir(config.ISSUES_DIR)
-	issueIDs.remove('.gitignore')
+	try:
+		issueIDs.remove('.gitignore')
+	except:	pass
 	return issueIDs
 			
 def _sortIssues(issueIDs, sortBy):
