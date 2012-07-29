@@ -33,10 +33,18 @@ def execute(args):
 		if len(issueIDs) == 0:
 			return
 
+		# Any sorting required?
 		if args.sort != None:
 			issueIDs = _sortIssues(issueIDs, args.sort)
+			
+		# Check to see if a default issue sort has been configured for this repository
+		else:
+			sort = getCmd('git config issue.ls.status')
+			if sort != None:
+				issueIDs = _sortIssues(issueIDs, sort)
 
-		if args.group:
+		# Group arg can be passed as parameter or via configured default
+		if args.group or getCmd('git config issue.ls.group') == 'true':
 			_displayGrouped(issueIDs)		
 		else:
 			_displayUnGrouped(issueIDs)
