@@ -37,6 +37,11 @@ def execute(args):
 		getCmd("touch " + config.GROUPS_DIR + "/.gitignore")
 		bFileAdd = True
 	
+	for key, val in config.STATUS_OPTS.iteritems():
+		getCmd('git config '
+				+ '-f ' + config.GHI_DIR + '/config '
+				+ 'status.s' + str(key) + ' "' + val + '"')
+	
 	if bFileAdd:
 		commit_helper.cleanWcAndCommitGhiDir("Initializing ghi")
 

@@ -6,10 +6,21 @@ class _Module:
 	@property
 	def STATUS_OPTS(self):
 		'''List of legal issue status values'''
-		import config_file
+		from subprocess_helper import getCmd
 		if not hasattr(self, '_STATUS_OPTS'):
-			config = config_file.ConfigFile.read(self.GHI_DIR + '/config')
-			self._STATUS_OPTS = config.statusOpts
+			# Set the default status options to be used in case no
+			# config file is present (shouldn't happen, but whatevs)
+			self._STATUS_OPTS = {0:'New',1:'In progress',2:'Fixed'}
+
+			status_options = getCmd('git config '
+									+ '-f ' + self.GHI_DIR + '/config '
+									+ '--get-regexp status.s')
+
+			if status_options != None:
+				for status in status_options.split('\n'):
+					key,sep,val = str(status).partition(' ')
+					self._STATUS_OPTS[int(key.lstrip('status.s'))] = val
+		
 		return self._STATUS_OPTS
 	
 	@property
