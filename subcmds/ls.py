@@ -69,8 +69,10 @@ def _sortIssues(issueIDs, sortBy):
 		# Organize the issues into status groups
 		issuesWithStatus = []
 		for sk in config.STATUS_OPTS:
-			for i in getCmd('git grep -n ^' + str(sk) + '$ -- ' + config.ISSUES_DIR).splitlines():
-				issuesWithStatus.extend([[sk, i.split(':')[0][len(issuesPathPrefix) + 1:]]]) # +1 to remove '/'
+			issues = getCmd('git grep -n ^' + str(sk) + '$ -- ' + config.ISSUES_DIR)
+			if issues != None:
+				for i in issues.splitlines():
+					issuesWithStatus.extend([[sk, i.split(':')[0][len(issuesPathPrefix) + 1:]]]) # +1 to remove '/'
 
 		# Sort by status
 		issuesWithStatus.sort(key=lambda issue: issue[0])
