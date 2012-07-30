@@ -42,31 +42,31 @@ function test_add() {
 		add "Add with title only"
 	git commit -m "Test ghi-add with title only"
 
-	$($GHI_CMD_ALIAS \
+	$GHI_CMD_ALIAS \
 		add "Add with -d" \
-		-d "Description of Issue")
+		-d "Description of Issue"
 	git commit -m "Test ghi-add with -d"
 
-	$($GHI_CMD_ALIAS \
+	$GHI_CMD_ALIAS \
 		add "Add with --description" \
-		--description "Description of Issue")
+		--description "Description of Issue"
 	git commit -m "Test ghi-add with --description"
 
-	$($GHI_CMD_ALIAS \
+	$GHI_CMD_ALIAS \
 		add "Add with --group" \
-		--group "Added with --group")
+		--group "Added with --group"
 	git commit -m "Test ghi-add with --description"
 
-	$($GHI_CMD_ALIAS \
+	$GHI_CMD_ALIAS \
 		add "Add with -d and --group" \
 		-d "Description of Issue" \
-		--group "ghi-add with --group")
+		--group "ghi-add with --group"
 	git commit -m "Test ghi-add with -d and --group"
 
-	$($GHI_CMD_ALIAS \
+	$GHI_CMD_ALIAS \
 		add "Add with --description and --group" \
 		--description "Description of Issue" \
-		--group "ghi-add with --group")
+		--group "ghi-add with --group"
 	git commit -m "Test ghi-add with --description and --group"
 }
 
@@ -75,12 +75,17 @@ function test_ls() {
 	echo "-        Test ghi-ls        -"
 	echo "-----------------------------"
 
-	# Store current git config issue.ls defaults
-	default_group=$(git config issue.ls.group)
-	default_sort=$(git config issue.ls.sort)
+	# If necessary, clear issue.ls defaults
+	bDefaults=0
+	if ! [ -z $(git config --get-regexp issue.ls) ]; then
+		bDefaults=1
 
-	# clear issue.ls defaults
-	git config --remove-section issue.ls 2> /dev/null
+		# Store current git config issue.ls defaults
+		default_group=$(git config issue.ls.group)
+		default_sort=$(git config issue.ls.sort)
+	
+		git config --remove-section issue.ls 2> /dev/null
+	fi
 
 	# Begin tests
 	printf "\n"
@@ -127,9 +132,25 @@ function test_ls() {
 	$GHI_CMD_ALIAS
 
 	# Restore issue.ls defaults
-	git config issue.ls.group $default_group
-	git config issue.ls.sort $default_sort
+	if [[ $bDefaults = 1 ]]; then
+		git config --bool issue.ls.group $default_group
+		git config issue.ls.sort $default_sort
+	fi
 }
+
+function test_rm() {
+	echo "-----------------------------"
+	echo "-        Test ghi-rm        -"
+	echo "-----------------------------"
+
+	issue_to_rm=$($GHI_CMD_ALIAS add "Issue to rm")
+	git commit -m "Add Issue for testing ghi-rm"
+	
+	$GHI_CMD_ALIAS rm $issue_to_rm
+	git commit -m "Issue removed with ghi-rm"
+}
+
+set -e	# Exit immediately if there is an error... don't keep going
 
 parseArgs $@
 
@@ -162,7 +183,7 @@ export GIT_PAGER=''
 $GHI_CMD_ALIAS	# quick test of empty set ghi-ls
 
 test_add
-
+test_rm
 test_ls
 
 # Reset paging back to its original settings
