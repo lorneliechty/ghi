@@ -23,9 +23,10 @@ def getGroupsForIssueId(issueID):
 
 	groups = []
 	pathPrefix = config.GROUPS_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
-	for path in groupPaths.split():
-		groupname = path[len(pathPrefix) + 1:] # +1 to remove '/'
-		groups.extend([groupname]) 
+	if groupPaths != None:
+		for path in groupPaths.split():
+			groupname = path[len(pathPrefix) + 1:] # +1 to remove '/'
+			groups.extend([groupname]) 
 	
 	return groups
 
