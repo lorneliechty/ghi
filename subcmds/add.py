@@ -70,7 +70,7 @@ def execute(args):
 		
 		if args.group:
 			group_helper.addIssueToGroup(issueID, args.group)
-			commit_helper.addToIndex(config.GROUPS_DIR + "/" + args.group)
+			commit_helper.addToIndex(config.GROUPS_DIR + '/"' + args.group + '"')
 		
 		# Display the new issue ID to the user
 		print issueID

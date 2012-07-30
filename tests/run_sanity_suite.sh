@@ -148,6 +148,12 @@ function test_rm() {
 	
 	$GHI_CMD_ALIAS rm $issue_to_rm
 	git commit -m "Issue removed with ghi-rm"
+
+	issue_to_rm=$($GHI_CMD_ALIAS add "Issue to rm" --group "ghi-rm test group")
+	git commit -m "Add Issue with --group for testing ghi-rm"
+	
+	$GHI_CMD_ALIAS rm $issue_to_rm
+	git commit -m "Issue added with --group removed with ghi-rm"
 }
 
 set -e	# Exit immediately if there is an error... don't keep going

@@ -24,7 +24,7 @@ def getGroupsForIssueId(issueID):
 	groups = []
 	pathPrefix = config.GROUPS_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
 	if groupPaths != None:
-		for path in groupPaths.split():
+		for path in groupPaths.splitlines():
 			groupname = path[len(pathPrefix) + 1:] # +1 to remove '/'
 			groups.extend([groupname]) 
 	
@@ -55,13 +55,13 @@ def rmIssueInGroup(issueID, groupname):
 	if len(groupIDs) == 1 and groupIDs[0] == issueID:
 		# HACK HACK HACK
 		# Should not be executing a git command here
-		getCmd("git rm " + getPathForGroup(groupname))
+		getCmd('git rm "' + getPathForGroup(groupname) + '"')
 	else:
-		with open(getPathForGroup(groupname), "wb") as f:
+		with open('"' + getPathForGroup(groupname) + '"', "wb") as f:
 			for identifier in groupIDs:
 				if not identifier == issueID:
 					f.write(identifier + "\n")
 
 		# HACK HACK HACK
 		# Should not be executing a git command here
-		getCmd("git add " + getPathForGroup(groupname))
+		getCmd('git add "' + getPathForGroup(groupname) + '"')
