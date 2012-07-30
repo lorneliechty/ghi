@@ -2,10 +2,12 @@
 
 from Issue import IssueDisplayBuilder
 from group_helper import getIssueIdsInGroups
+from pager import PageOutputBeyondThisPoint
 from subprocess_helper import getCmd
 import config
 import dircache
 import identifiers
+import sys
 
 NAME = "ls"
 HELP = "List issues"
@@ -32,6 +34,10 @@ def execute(args):
 		issueIDs = _getAllIssueIDs()
 		if len(issueIDs) == 0:
 			return
+
+		# We may have a lot of issues in the list that would make the output
+		# run pretty long, therefore page it.
+		PageOutputBeyondThisPoint()
 
 		# Any sorting required?
 		if args.sort != None:
@@ -94,7 +100,7 @@ def _displayGrouped(issueIDs):
 	for g in groups:
 		print g
 		for issueID in groups[g]:
-			print IssueDisplayBuilder(issueID).getOneLineStr()
+			sys.stdout.write(IssueDisplayBuilder(issueID).getOneLineStr() + '\n')
 		print ""
 	
 	print "ungrouped"
