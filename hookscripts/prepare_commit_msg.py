@@ -18,17 +18,16 @@ def prependGhiCommitMsg(commitMsgFilepath):
 	relGroupsPath = config.GROUPS_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
 
 	# Find any .ghi files in the index
-	ghiMods = getCmd('git diff --cached --name-status -- ' 
-					+ config.GHI_DIR).split('\n')
+	ghiMods = getCmd('git diff --cached --name-status -- '	+ config.GHI_DIR)
 	
-	if len(ghiMods) == 1 and ghiMods[0] == '':
+	if ghiMods == None:
 		# Nothing of interest in index... bail
 		return None
 	
 	# Build a set of suggested commit message lines based on the
 	# changes to .ghi files in the index
 	commitMsg=['\n']
-	for mod in ghiMods:
+	for mod in ghiMods.split('\n'):
 		m = mod.split()
 
 		# if file was an issue
