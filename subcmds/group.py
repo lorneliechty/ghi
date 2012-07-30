@@ -25,7 +25,7 @@ class Args:
 	OPT_DELETE_ACTION="store_true"
 
 def execute(args):
-
+	print args
 	# Are we deleting an issue from an existing group?
 	if args.d and not args.id == None and not args.groupname == None:
 		issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
@@ -38,7 +38,9 @@ def execute(args):
 	
 	# Are we deleting a group completely?
 	elif args.d and args.id == None and not args.groupname == None:
-		getCmd("rm " + config.GROUPS_DIR + "/" + args.d)
+		cmd = 'git rm "' + config.GROUPS_DIR + '/' + args.groupname + '"'
+		print cmd
+		#getCmd('git rm "' + config.GROUPS_DIR + '/' + args.groupname + '"')
 		return None
 	
 	if args.groupname == None and args.id == None:
@@ -54,5 +56,4 @@ def execute(args):
 	# get the full issue ID & Add the issue to the group
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
 	group_helper.addIssueToGroup(issueID, args.groupname)
-	commit_helper.addToIndex(group_helper.getPathForGroup(args.groupname))
-	
+	commit_helper.addToIndex('"' + group_helper.getPathForGroup(args.groupname) + '"')

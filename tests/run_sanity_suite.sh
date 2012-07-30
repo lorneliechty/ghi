@@ -138,6 +138,22 @@ function test_ls() {
 	fi
 }
 
+function test_group() {
+	echo "--------------------------------"
+	echo "-        Test ghi-group        -"
+	echo "--------------------------------"
+
+	$GHI_CMD_ALIAS group
+
+	issue_to_group=$($GHI_CMD_ALIAS add "Issue to group")
+	git commit -m "Add Issue for testing ghi-group"
+	$GHI_CMD_ALIAS group $issue_to_group "ghi-group test group"
+	git commit -m "Group Issue for testing ghi-group"
+
+	$GHI_CMD_ALIAS group -d "ghi-group test group"
+	git commit -m "Remove group for testing ghi-group"
+}
+
 function test_rm() {
 	echo "-----------------------------"
 	echo "-        Test ghi-rm        -"
@@ -186,9 +202,11 @@ GHI_CMD_ALIAS='git issue'
 GIT_PAGER_HOLDER=$GIT_PAGER
 export GIT_PAGER=''
 
-$GHI_CMD_ALIAS	# quick test of empty set ghi-ls
+$GHI_CMD_ALIAS			# quick test of empty set ghi-ls
+$GHI_CMD_ALIAS group	# quick test of empty set ghi-group
 
 test_add
+test_group
 test_rm
 test_ls
 
