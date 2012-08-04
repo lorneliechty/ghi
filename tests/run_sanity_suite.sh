@@ -70,6 +70,24 @@ function test_add() {
 	git commit -m "Test ghi-add with --description and --group"
 }
 
+function test_edit() {
+	echo "-------------------------------"
+	echo "-        Test ghi-edit        -"
+	echo "-------------------------------"
+
+	issue_to_edit=$($GHI_CMD_ALIAS add "Issue for testing ghi-edit")
+	git commit -m "Add issue to test ghi-edit"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -t "ghi-edit New Title Only"
+	git commit -m "ghi-edit New Title Only"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -d "ghi-edit New Description Only"
+	git commit -m "ghi-edit New Description Only"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -t "ghi-edit New Title" -d "ghi-edit New Description"
+	git commit -m "ghi-edit New Title and New Description"
+}
+
 function test_ls() {
 	echo "-----------------------------"
 	echo "-        Test ghi-ls        -"
@@ -211,6 +229,7 @@ $GHI_CMD_ALIAS			# quick test of empty set ghi-ls
 $GHI_CMD_ALIAS group	# quick test of empty set ghi-group
 
 test_add
+test_edit
 test_group
 test_rm
 test_ls
