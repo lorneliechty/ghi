@@ -2,9 +2,14 @@
 from subprocess_helper import getCmd
 import config
 import dircache
+import os
+
+def groupExists(groupname):
+	return os.path.exists(getPathForGroup(groupname))
 
 def getPathForGroup(groupname):
-	return config.GROUPS_DIR + "/" + groupname
+	groupPath = config.GROUPS_DIR + "/" + groupname
+	return groupPath
 
 def getIssueIdsInGroups():
 	ret = {};
@@ -57,7 +62,7 @@ def rmIssueInGroup(issueID, groupname):
 		# Should not be executing a git command here
 		getCmd('git rm "' + getPathForGroup(groupname) + '"')
 	else:
-		with open('"' + getPathForGroup(groupname) + '"', "wb") as f:
+		with open(getPathForGroup(groupname), "wb") as f:
 			for identifier in groupIDs:
 				if not identifier == issueID:
 					f.write(identifier + "\n")

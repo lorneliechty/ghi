@@ -103,8 +103,7 @@ cmd_group.add_argument(subcmds.group.Args.GROUPNAME,
 					nargs=subcmds.group.Args.GROUPNAME_NARGS)
 
 cmd_group.add_argument(subcmds.group.Args.OPT_DELETE_SHORT,
-					help=subcmds.group.Args.OPT_DELETE_HELP,
-					action=subcmds.group.Args.OPT_DELETE_ACTION)
+					help=subcmds.group.Args.OPT_DELETE_HELP)
 
 cmd_group.set_defaults(func=subcmds.group.execute)
 

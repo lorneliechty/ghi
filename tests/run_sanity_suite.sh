@@ -150,6 +150,11 @@ function test_group() {
 	$GHI_CMD_ALIAS group $issue_to_group "ghi-group test group"
 	git commit -m "Group Issue for testing ghi-group"
 
+	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" --group "ghi-group test group")
+	git commit -m "Add Issue for testing ghi-group"
+	$GHI_CMD_ALIAS group -d $issue_to_rm_from_group "ghi-group test group"
+	git commit -m "Remove issue from existing group for testing ghi-group"
+
 	$GHI_CMD_ALIAS group -d "ghi-group test group"
 	git commit -m "Remove group for testing ghi-group"
 }

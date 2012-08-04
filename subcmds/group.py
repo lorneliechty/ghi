@@ -22,25 +22,35 @@ class Args:
 	
 	OPT_DELETE_SHORT="-d"
 	OPT_DELETE_HELP="Delete an issue from a group or a group completely"
-	OPT_DELETE_ACTION="store_true"
 
 def execute(args):
 	print args
-	# Are we deleting an issue from an existing group?
-	if args.d and not args.id == None and not args.groupname == None:
-		issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
-		group_helper.rmIssueInGroup(issueID, args.groupname)
-		# HACK HACK HACK
-		# Should be executing a git command here to add the
-		# subsequent group changes to the index, but I'm taking
-		# a shortcut for the moment
-		return None
 	
-	# Are we deleting a group completely?
-	elif args.d and args.id == None and not args.groupname == None:
-		cmd = 'git rm "' + config.GROUPS_DIR + '/' + args.groupname + '"'
-		print cmd
-		#getCmd('git rm "' + config.GROUPS_DIR + '/' + args.groupname + '"')
+	# Are we deleting something?
+	if args.d != None:
+		# see if we're deleting an existing issue from a group
+		issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.d)
+		if issueID != None:
+			# HACK HACK HACK
+			# The command line parsing here is totally messed up and so
+			# rather than using the groupname we have to pretend here
+			# that the id is the groupname... the command line just
+			# needs to be rewritten :(
+			group_helper.rmIssueInGroup(issueID, args.id)
+			
+			# HACK HACK HACK
+			# Should be executing a git command here to add the
+			# subsequent group changes to the index, but I'm taking
+			# a shortcut for the moment
+			return None
+		
+		# see if we're deleting a group entirely
+		if group_helper.groupExists(args.d):
+			getCmd('git rm "' + group_helper.getPathForGroup(args.d) + '"')
+			return None
+		
+		# tried to delete, but we couldn't figure out what...
+		print "Could not delete " + args.d
 		return None
 	
 	if args.groupname == None and args.id == None:
