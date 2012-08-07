@@ -68,6 +68,10 @@ With ghi this is possible.
 	git issue edit -s Fixed [issue id]
 	git commit	# ghi will auto-suggest a commit message based on issues you've edited
 
+\- alternatively \-
+
+	git commit edit [issue id]	# opens up an interactive editor based on your configured editor preference in git
+
 ### How to close an Issue / bug in ghi:
 Hate sifting through endless lists of closed bugs?
 In ghi, you remove an Issue when its closed and let the SCM handle archiving a file that should never change.
