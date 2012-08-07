@@ -2,7 +2,7 @@ GHI: Git Has Issues
 ----------------------------------------------------------------------------
     Git Has Issues (GHI), is an open source implementation of an Issues-compatible issue tracking system for the git version control system (VCS). GHI relies on Issues for the definition of how an issue is defined and provides the necessary set of helpful tools that make issue tracking possible.
 
-As of the start of this project a final open source license has not been chosen for GHI. So for now assume that it will be the Apache License v2.0
+This project is licensed under Apache License, Version 2.0. You may obtain a copy of the license at http://www.apache.org/licenses/LICENSE-2.0
 
 ## How to install ghi:
 git clone git://github.com/path/to/ghi.git /path/to/ghi
