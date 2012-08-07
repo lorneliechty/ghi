@@ -1,6 +1,7 @@
 ghi: Git Has Issues
 ====================
-Git Has Issues (ghi), is an open source implementation of an Issues-compatible issue tracking system for the git version control system. Ghi relies on Issues for the definition of how an issue is defined and provides the necessary set of helpful tools that make issue tracking possible.
+Git Has Issues (ghi), is an open source implementation of an Issues-compatible issue tracking system for the git version control system.
+Ghi relies on Issues for the definition of how an issue is defined and provides the necessary set of helpful tools that make issue tracking possible.
 
 ## Sufficiently confusing? What is ghi really meant to be?
 Ghi is meant to be a bug tracker.
@@ -10,6 +11,8 @@ Rather than try to define what an Issue is though it focuses on how to track the
 Ghi leaves Issue definition up to another project: "Issues".
 The Issues project focuses only on what information should be stored in an Issue and, perhaps more importantly, what information should be left to an SCM like git.
 The idea of tracking Issues within git is where the project gets its name: Git Has Issues.
+
+*Wondering where the Issues project is? It's currently under development and not yet ready for public viewing. If you grok ghi though you'll love Issues! A link will be provided when it is ready.*
 
 ## Why write a new bug tracker? What are the benefits?
 Currently, the primary goal of ghi is to make bug tracking orders-of-magnitude faster for the individual developer.
@@ -51,7 +54,7 @@ With ghi, it is!
 Adding a bug should be a fast as possible. One line is better than 3 or 4 clicks in a browser.
 
 	git issue add "Bug I need to fix"
-	git commit	# ghi will auto-suggest a commit message based on issues you've added>
+	git commit	# ghi will auto-suggest a commit message based on issues you've added
 
 \- alternatively \-
 
