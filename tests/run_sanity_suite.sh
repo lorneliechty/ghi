@@ -98,8 +98,23 @@ function test_edit() {
 	$GHI_CMD_ALIAS edit $issue_to_edit -d "ghi-edit New Description Only"
 	git commit -m "ghi-edit New Description Only"
 
+	$GHI_CMD_ALIAS edit $issue_to_edit -s "Fixed"
+	git commit -m "ghi-edit New Status Only"
+
 	$GHI_CMD_ALIAS edit $issue_to_edit -t "ghi-edit New Title" -d "ghi-edit New Description"
 	git commit -m "ghi-edit New Title and New Description"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -s "New" -d "ghi-edit New Description"
+	git commit -m "ghi-edit New Status and New Description"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -t "ghi-edit Newer Title" -s "New"
+	git commit -m "ghi-edit New Status and New Title"
+
+	$GHI_CMD_ALIAS edit $issue_to_edit -t "Newest Title" -s "In progress" -d "ghi-edit Newest Description"
+	git commit -m "ghi-edit New Title, New Status, and New Description"
+
+	# Test a non-existing status... shouldn't crash
+	$GHI_CMD_ALIAS edit $issue_to_edit -s "asd;flaksjd"
 }
 
 function test_ls() {

@@ -71,10 +71,17 @@ def execute(args):
 	if args.status:
 		# There is a potential bug here in situations where there is 
 		# more than one status with the same value name
+		statusUpdate = None
 		for k,v in config.STATUS_OPTS.iteritems():
 			if args.status == v:
-				issue.setStatus(k)
+				statusUpdate = k
 				break
+		
+		if statusUpdate != None:
+			issue.setStatus(statusUpdate)
+		else:
+			print "Status does not exist!"
+			return None
 	
 	# Set title
 	if args.title:
