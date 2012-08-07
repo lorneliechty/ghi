@@ -37,11 +37,15 @@ class Args:
 	OPT_DESCRIPTION_SHORT="-d"
 	OPT_DESCRIPTION_HELP="Description"
 
+	OPT_STATUS="--status"
+	OPT_STATUS_SHORT="-s"
+	OPT_STATUS_HELP="Status"
+
 def execute(args):
 	
 	# First validate arguments
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
-	if (issueID == None):
+	if issueID == None:
 		# ID is required... no good
 		return None
 
@@ -50,7 +54,7 @@ def execute(args):
 							config.ISSUES_DIR + "/" + issueID);
 	
 	# Are we going to use interactive editing?	
-	if (args.title == None and args.description == None):
+	if args.status == None and args.title == None and args.description == None:
 		tmpFile = config.GHI_DIR + "/" + "ISSUE_EDIT";
 		IssueFile.writeEditableIssueToDisk(tmpFile, issue)
 		tmpFileHash = getCmd("git hash-object " + tmpFile)
@@ -62,13 +66,22 @@ def execute(args):
 		if (tmpFileHash == getCmd("git hash-object " + tmpFile)):
 			print "No change in Issue data. Issue not updated"
 			return None
-		
+	
+	# Set the status
+	if args.status:
+		# There is a potential bug here in situations where there is 
+		# more than one status with the same value name
+		for k,v in config.STATUS_OPTS.iteritems():
+			if args.status == v:
+				issue.setStatus(k)
+				break
+	
 	# Set title
-	if (args.title):
+	if args.title:
 		issue.setTitle(args.title)
 	
 	# Set description
-	if (args.description):
+	if args.description:
 		issue.setDescription(args.description)
 	
 	# Make changes to index for commit

@@ -14,11 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from compiler.ast import Sub
 import argparse
 import subcmds
 import sys
-from argparse import Action
 
 GHI_VERSION = "0.0.1.1"
 def printVersion():
@@ -84,6 +82,10 @@ cmd_edit = cmds.add_parser(subcmds.edit.NAME,
 
 cmd_edit.add_argument(subcmds.edit.Args.ID,
 					  help=subcmds.edit.Args.ID_HELP)
+
+cmd_edit.add_argument(subcmds.edit.Args.OPT_STATUS_SHORT,
+					  subcmds.edit.Args.OPT_STATUS,
+					  help=subcmds.edit.Args.OPT_STATUS_HELP)
 
 cmd_edit.add_argument(subcmds.edit.Args.OPT_TITLE_SHORT,
 					  subcmds.edit.Args.OPT_TITLE,
