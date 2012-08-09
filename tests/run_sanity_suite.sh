@@ -220,6 +220,8 @@ function test_rm() {
 	echo "-        Test ghi-rm        -"
 	echo "-----------------------------"
 
+	$GHI_CMD_ALIAS rm "aasodfinasodinfaosdf"	# Test removal of non-existant issue
+
 	issue_to_rm=$($GHI_CMD_ALIAS add "Issue to rm")
 	git commit -m "Add Issue for testing ghi-rm"
 	

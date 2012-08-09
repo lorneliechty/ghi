@@ -30,6 +30,10 @@ class Args:
 def execute(args):
 	if (args.id):
 		issueID = getFullIssueIdFromLeadingSubstr(args.id)
+		if issueID == None:
+			print "Could not find issue: " + args.id
+			return None
+		
 		issuePath = getPathFromId(issueID)
 		issueTitle = Issue(issueID).getTitle()
 		
