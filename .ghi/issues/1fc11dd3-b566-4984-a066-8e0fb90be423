@@ -1,8 +1,0 @@
-ISSUE-1
-2
-Support for default sort, filter, group options for ghi-ls
-Fixed by allowing the user to set key-value pairs in git config file.
-
-Examples:
-	git config --bool issue.ls.group
-	git config issue.ls.sort status
