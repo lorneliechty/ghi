@@ -38,8 +38,6 @@ class Args:
 	OPT_DELETE_HELP="Delete an issue from a group or a group completely"
 
 def execute(args):
-	print args
-	
 	# Are we deleting something?
 	if args.d != None:
 		# see if we're deleting an existing issue from a group
@@ -75,6 +73,7 @@ def execute(args):
 	
 	if args.groupname == None:
 		# We don't support this syntax yet
+		print "Command not currently supported"
 		return None
 	
 	# get the full issue ID & Add the issue to the group

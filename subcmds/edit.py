@@ -47,6 +47,7 @@ def execute(args):
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
 	if issueID == None:
 		# ID is required... no good
+		print "Could not find issue: " + args.id
 		return None
 
 	# Load the existing issue

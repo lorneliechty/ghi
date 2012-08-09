@@ -60,6 +60,7 @@ def execute(args):
 	
 	elif (args.title == None):
 		# Title is required... no good
+		print "An issue title is required. Try 'add' with no arguments for interactive mode"
 		return None
 	
 	else:

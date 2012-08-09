@@ -42,6 +42,10 @@ class Args:
 def execute(args):
 	if args.id:
 		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+		if issueId == None:
+			print "Could not find issue: " + args.id
+			return None
+
 		print IssueDisplayBuilder(issueId).getFullIssueDisplay()
 
 	else:
