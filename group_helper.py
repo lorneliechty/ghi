@@ -75,7 +75,16 @@ def rmIssueInGroup(issueID, groupname):
 	if len(groupIDs) == 1 and groupIDs[0] == issueID:
 		# HACK HACK HACK
 		# Should not be executing a git command here
-		getCmd('git rm "' + getPathForGroup(groupname) + '"')
+		#
+		# Another Hackish note...
+		# It's possible for the user, when they run multiple 
+		# ghi-rm commands in a row without committing, to here
+		# try to remove the group file when changes to it are
+		# already staged in the index. Really we should try to
+		# get confirmation from the user in this scenario (maybe?)
+		# ... but for now we're just going to force the remove
+		# with '-f'
+		getCmd('git rm -f "' + getPathForGroup(groupname) + '"')
 	else:
 		with open(getPathForGroup(groupname), "wb") as f:
 			for identifier in groupIDs:
