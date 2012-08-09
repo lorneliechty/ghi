@@ -18,7 +18,7 @@ import argparse
 import subcmds
 import sys
 
-GHI_VERSION = "0.0.1.1"
+GHI_VERSION = "0.1.0"
 def printVersion():
 	print "ghi version " + GHI_VERSION
 
