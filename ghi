@@ -15,12 +15,18 @@
 # limitations under the License.
 
 import argparse
+import config
 import subcmds
 import sys
 
 GHI_VERSION = "0.1.1"
 def printVersion():
 	print "ghi version " + GHI_VERSION
+	
+# First, check to see if we are even in a git repository...
+if str(config.GIT_ROOT).count("fatal: Not a git repository"):
+	print "Not a git repository! ghi commands must be run within a git!"
+	quit()
 
 # Create top-level argument parser
 parser = argparse.ArgumentParser()
