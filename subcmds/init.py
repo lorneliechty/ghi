@@ -62,11 +62,12 @@ def execute(args):
 	# Alias "git issue" to ghi
 	if args.ghi_path:
 		getCmd("git config alias.issue '!" + args.ghi_path + "/ghi'")
+		ghicmdpath = args.ghi_path
 	else:
 		getCmd("git config alias.issue '!ghi'")
+		ghicmdpath = "ghi"
 		
 	# Insert git hooks
-	ghicmdpath = getCmd("git config alias.issue")[1:-4]
 	getCmd("cp " + ghicmdpath + "/hooks/prepare-commit-msg "
 				+ config.GIT_ROOT + "/.git/hooks/")
 		
