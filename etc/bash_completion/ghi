@@ -1,0 +1,105 @@
+#! /bin/bash
+
+# __ghidir accepts 0 or 1 arguments (i.e., location)
+# returns location of .ghi dir in git repo
+__ghidir () {
+	local gitdir="$(__gitdir "${1-}")"
+
+	if [ -d $gitdir ]; then
+		echo ${gitdir/.git/.ghi}
+	fi
+}
+
+__ghi_issues_dir() {
+	local ghidir="$(__ghidir "${1-}")"
+
+	if [ -d $ghidir ]; then
+		echo $ghidir/issues
+	fi
+}
+
+__ghi_issues_short() {
+	local issuesdir="$(__ghi_issues_dir "${1-}")"
+	
+	if [ -d "$issuesdir" ]; then
+		ls -1 ${issuesdir} | cut -c 1-7
+	fi
+}
+
+__ghi_groups_dir() {
+	local ghidir="$(__ghidir "${1-}")"
+
+	if [ -d $ghidir ]; then
+		echo $ghidir/groups
+	fi
+}
+
+__ghi_groups() {
+	local groupsdir="$(__ghi_groups_dir "${1-}")"
+	
+	if [ -d "$groupsdir" ]; then
+		ls -1 ${groupsdir}
+	fi
+}
+
+__ghi_issues_short_and_groups() {
+	__ghi_issues_short
+	__ghi_groups
+}
+
+_ghi_edit() {
+	__gitcomp "$(__ghi_issues_short)"
+}
+
+_ghi_rm() {
+	__gitcomp "$(__ghi_issues_short)"
+}
+
+_ghi_group() {
+	# HACK HACK HACK
+	# Need to get rid of the magic number here because it won't work
+	# if the call is directly through ghi rather than git-issue alias
+	if [ ${#words[*]} -le 4 ]; then
+		__gitcomp "$(__ghi_issues_short_and_groups)"
+		return
+	fi
+
+	local group="$(__git_find_on_cmdline "$(__ghi_groups)")"
+	if [ -n $group ]; then
+		return
+	fi
+
+	# HACK HACK HACK
+	# Need to get rid of the magic number here because it won't work
+	# if the call is directly through ghi rather than git-issue alias
+	if [[ ${#words[*]} -eq 5 ]]; then
+		__gitcomp "$(__ghi_groups)"
+		return
+	fi
+}
+
+_ghi() {
+	local subcommands="add edit rm group"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+		return
+	fi
+
+	case "$subcommand" in
+	edit)
+		_ghi_edit
+		;;
+	rm)
+		_ghi_rm
+		;;
+	group)
+		_ghi_group
+		;;
+	esac
+}
+
+_git_issue() {
+	_ghi
+}
+
