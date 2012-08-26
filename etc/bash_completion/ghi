@@ -42,6 +42,17 @@ __ghi_groups() {
 	fi
 }
 
+__ghi_is_str_groupname() {
+	for group in $(__ghi_groups); do
+		if [ $1 = $group ]; then
+			echo 1;
+			return
+		fi
+	done
+
+	echo 0;
+}
+
 __ghi_issues_short_and_groups() {
 	__ghi_issues_short
 	__ghi_groups
@@ -64,8 +75,7 @@ _ghi_group() {
 		return
 	fi
 
-	local group="$(__git_find_on_cmdline "$(__ghi_groups)")"
-	if [ -n $group ]; then
+	if [ $(__ghi_is_str_groupname "${words[3]}") = 1 ]; then
 		return
 	fi
 
