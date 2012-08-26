@@ -59,7 +59,24 @@ __ghi_issues_short_and_groups() {
 }
 
 _ghi_edit() {
-	__gitcomp "$(__ghi_issues_short)"
+	__git_has_doubledash && return
+
+	case "$cur" in
+	--*)
+		__gitcomp "--title --description --status"
+		return
+		;;
+	*)
+		local statusFlags="--status -s"
+		for flag in $statusFlags; do
+			if [ "${words[$((${#words[@]}-2))]}" = $flag ]; then
+				__gitcomp "Fixed InProg New"
+				return
+			fi
+		done
+		__gitcomp "$(__ghi_issues_short)"
+	;;
+	esac
 }
 
 _ghi_rm() {
