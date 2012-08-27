@@ -1,5 +1,9 @@
 #! /bin/bash
 
+__ghi_exec_dir() {
+	which $(git config alias.issue | cut -c 2-) | sed s/.ghi$//
+}
+
 # __ghidir accepts 0 or 1 arguments (i.e., location)
 # returns location of .ghi dir in git repo
 __ghidir () {
@@ -8,6 +12,10 @@ __ghidir () {
 	if [ -d $gitdir ]; then
 		echo ${gitdir/.git/.ghi}
 	fi
+}
+
+__ghi_status_opts() {
+	git config -f $(__ghidir)/config --get-regexp status | sed s/^status.s..//
 }
 
 __ghi_issues_dir() {
@@ -70,8 +78,12 @@ _ghi_edit() {
 		local statusFlags="--status -s"
 		for flag in $statusFlags; do
 			if [ "${words[$((${#words[@]}-2))]}" = $flag ]; then
-				__gitcomp "Fixed InProg New"
-				return
+				local IFS=$'\n'
+				COMPREPLY=( \
+					$(compgen -S " " -W "$(__ghi_status_opts)" \
+					-- $cur))
+				unset IFS
+				return 0
 			fi
 		done
 		__gitcomp "$(__ghi_issues_short)"
