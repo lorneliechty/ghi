@@ -40,12 +40,30 @@ __ghi_issues_dir() {
 	fi
 }
 
+__ghi_issues() {
+	local issuesdir="$(__ghi_issues_dir "${1-}")"
+	
+	if [ -d "$issuesdir" ]; then
+		ls -1 ${issuesdir}
+	fi
+}
+
 __ghi_issues_short() {
 	local issuesdir="$(__ghi_issues_dir "${1-}")"
 	
 	if [ -d "$issuesdir" ]; then
 		ls -1 ${issuesdir} | cut -c 1-7
 	fi
+}
+
+__ghi_is_str_leading_substr_of_issue_id() {
+	for id in $(__ghi_issues); do
+		if [[ "$id" =~ $1*  ]]; then
+			echo 1; return 0
+		fi
+	done
+
+	echo 0; return 1
 }
 
 __ghi_groups_dir() {
@@ -93,8 +111,11 @@ _ghi_ls() {
 		for flag in $statusFlags; do
 			if [ "${words[$((${#words[@]}-2))]}" = $flag ]; then
 				__gitcomp "status"
+				return
 			fi
 		done
+
+		__gitcomp "$(__ghi_issues_short)"
 	;;
 	esac
 }
@@ -185,10 +206,26 @@ _ghi() {
 		_ghi_ls
 		;;
 	*)
+		# First look for a subcommand...
 		local subcommands="add edit rm group"
 		local subcommand="$(__git_find_on_cmdline "$subcommands")"
 		if [ -z "$subcommand" ]; then
-			__gitcomp "$subcommands"
+			# If no subcommand found... see if our current word is the start of a subcommand
+			for cmd in $subcommands; do
+				if [[ "$cmd" =~ $cur* ]]; then
+					__gitcomp "$subcommands"
+					return
+				fi
+			done
+
+			# If no subcommand found... see if our current word is the start of an issue id
+			if [ $(__ghi_is_str_leading_substr_of_issue_id "$cur") = 1 ]; then
+				__gitcomp "$(__ghi_issues_short)"
+				return
+			fi
+
+			# If no start of issue... offer subcommand + "<issue-id>" completion option
+			__gitcomp "$subcommands <issue-id>"
 			return
 		fi
 
