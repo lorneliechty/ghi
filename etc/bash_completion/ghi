@@ -66,6 +66,30 @@ __ghi_issues_short_and_groups() {
 	__ghi_groups
 }
 
+_ghi_add() {
+	__git_has_doubledash && return
+
+	case "$cur" in
+	--*)
+		__gitcomp "--description --group"
+		return
+		;;
+	*)
+		local statusFlags="--group -g"
+		for flag in $statusFlags; do
+			if [ "${words[$((${#words[@]}-2))]}" = $flag ]; then
+				local IFS=$'\n'
+				COMPREPLY=( \
+					$(compgen -W "$(__ghi_groups)" \
+					-- $cur))
+				unset IFS
+				return 0
+			fi
+		done
+	;;
+	esac
+}
+
 _ghi_edit() {
 	__git_has_doubledash && return
 
@@ -126,6 +150,9 @@ _ghi() {
 	fi
 
 	case "$subcommand" in
+	add)
+		_ghi_add
+		;;
 	edit)
 		_ghi_edit
 		;;
