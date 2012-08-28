@@ -80,7 +80,7 @@ _ghi_edit() {
 			if [ "${words[$((${#words[@]}-2))]}" = $flag ]; then
 				local IFS=$'\n'
 				COMPREPLY=( \
-					$(compgen -S " " -W "$(__ghi_status_opts)" \
+					$(compgen -W "$(__ghi_status_opts)" \
 					-- $cur))
 				unset IFS
 				return 0
