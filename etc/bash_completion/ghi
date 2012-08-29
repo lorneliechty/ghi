@@ -196,20 +196,20 @@ _ghi_group() {
 }
 
 _ghi() {
-	if [[ $(__ghi_has_doubledash_option) == 1 ]]; then
-		_ghi_ls
-		return
-	fi
+	# First look for a subcommand...
+	local subcommands="add edit rm group"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		if [[ $(__ghi_has_doubledash_option) == 1 ]]; then
+			_ghi_ls
+			return
+		fi
 
-	case "$cur" in
-	--*)
-		_ghi_ls
-		;;
-	*)
-		# First look for a subcommand...
-		local subcommands="add edit rm group"
-		local subcommand="$(__git_find_on_cmdline "$subcommands")"
-		if [ -z "$subcommand" ]; then
+		case "$cur" in
+		--*)
+			_ghi_ls
+			;;
+		*)
 			# If no subcommand found... see if our current word is the start of a subcommand
 			for cmd in $subcommands; do
 				if [[ "$cmd" =~ $cur* ]]; then
@@ -224,26 +224,26 @@ _ghi() {
 				return
 			fi
 
-			# If no start of issue... offer subcommand + "<issue-id>" completion option
-			__gitcomp "$subcommands <issue-id>"
+			# If no start of issue... offer subcommand completion option
+			__gitcomp "$subcommands"
 			return
-		fi
-
-		case "$subcommand" in
-		add)
-			_ghi_add
-			;;
-		edit)
-			_ghi_edit
-			;;
-		rm)
-			_ghi_rm
-			;;
-		group)
-			_ghi_group
 			;;
 		esac
-	;;
+	fi
+
+	case "$subcommand" in
+	add)
+		_ghi_add
+		;;
+	edit)
+		_ghi_edit
+		;;
+	rm)
+		_ghi_rm
+		;;
+	group)
+		_ghi_group
+		;;
 	esac
 }
 
