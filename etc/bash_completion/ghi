@@ -195,7 +195,7 @@ _ghi_group() {
 	fi
 }
 
-_ghi() {
+_git_issue() {
 	# First look for a subcommand...
 	local subcommands="add edit rm group"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
@@ -247,7 +247,42 @@ _ghi() {
 	esac
 }
 
-_git_issue() {
-	_ghi
+_ghi() {
+	_get_comp_words_by_ref -n =: cur words cword prev
+
+	# ghi has only one suggested subcommand when executed via "ghi", init.
+	local subcommand
+	for word in "${words[@]}"; do
+		if [ "$word" = "init" ]; then
+			subcommand="init"
+		fi
+	done
+	
+	if [ -z $subcommand ]; then
+		if [[ $(__ghi_has_doubledash_option) == 1 ]]; then
+			return
+		fi
+
+		case "$cur" in
+		--*)
+			__gitcomp "--version --help"
+			;;
+		*)
+			__gitcomp "init"
+			;;
+		esac
+		return
+	fi
+
+	case $subcommand in
+	init)
+		case "$cur" in
+		--*)
+			__gitcomp "--ghi_path"
+			;;
+		esac
+		;;
+	esac
 }
 
+complete -o bashdefault -o default -o nospace -F _ghi ghi 2>/dev/null
