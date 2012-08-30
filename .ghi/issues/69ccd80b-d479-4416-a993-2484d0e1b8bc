@@ -1,0 +1,11 @@
+ISSUE-1
+0
+Support for issue creation / editing via TODO's
+The basic idea for this feature is that ghi would be a great way to consolidate standard TODO comments from across source files.
+This is a pretty common feature among IDE's, but ghi could add this kind of value to a bash shell.
+
+Keeping in sync might be tricky (particularly in scenarios where a source file is modified outside of a ghi-infused git repo).
+
+May need to have support for absolute source file referencing in ghi issues to do it right.
+By this I mean being able to reference path, file, line, char of source in standard way.
+Migh also want to include the hash of the file used for the link?
