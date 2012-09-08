@@ -64,10 +64,13 @@ cleanvars() {
 
 determineOS() {
 	export OSX="Darwin"
+	export LINUX="Linux"
 
 	# Detect OS
 	if [ -n "$(uname -a | grep $OSX)" ]; then
 		export OS=$OSX
+	elif [ -n "$(uname -a | grep $LINUX)" ]; then
+		export OS=$LINUX
 	else
 		export OS="Unknown"
 	fi
@@ -77,6 +80,9 @@ getBashCompletionInstallDir() {
 	case $OS in
 	$OSX)
 		echo "/opt/local/etc/bash_completion.d"
+		;;
+	$LINUX)
+		echo "/etc/bash_completion.d"
 		;;
 	esac
 }
