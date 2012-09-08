@@ -54,7 +54,7 @@ With ghi, it is!
 ### How to add an Issue / bug in ghi:
 Adding a bug should be a fast as possible. One line is better than 3 or 4 clicks in a browser.
 
-git issue add "Bug I need to fix"
+	git issue add "Bug I need to fix"
 	git commit	# ghi will auto-suggest a commit message based on issues you've added
 
 \- alternatively \-
