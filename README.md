@@ -41,7 +41,8 @@ Installing ghi on your machine is easy. Just clone the repository and put it on 
 The project dependencies are kept intentionally minimal (just python 2.7 and git 1.7)
 
 	git clone git://github.com/lorneliechty/ghi.git /path/to/ghi
-	export PATH=$PATH:/path/to/ghi
+	export PATH=$PATH:/path/to/ghi	# add this line to your ~/.bashrc or ~/.bash_profile
+	./install-bashcompletion.sh		# installs bash completion (use --uninstall option to remove bash completion)
 
 ### How to start using ghi in your git repository:
 Adding a bug tracker to your project should be as easy as starting your repository.

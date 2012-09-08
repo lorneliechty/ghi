@@ -21,16 +21,45 @@ main() {
 	    exit 1
 	fi
 	
-	cleanvars
+	parseargs $@
 	determineOS
 
 	if [ $(isBashCompletionInstalled) = 1 ]; then
-		installBashCompletion
+		if [[ $UNINSTALL == 1 ]]; then
+			uninstallBashCompletion
+		else
+			installBashCompletion
+		fi
 	fi
+}
+
+parseargs() {
+	cleanvars
+	until [ -z "$1" ]; do
+		# use a case statement to test vars. we always test
+		# test $1 and shift at the end of the for block.
+		case $1 in 
+		--uninstall ) 
+			# set to 1 for later testing 
+			UNINSTALL=1 
+		;; 
+		-* ) 
+			echo "Unrecognized option: $1" 
+			exit 1 
+		;; 
+		esac 
+		
+		shift 
+		
+		if [ "$#" = "0" ]; then 
+			break 
+		fi 
+	done 
 }
 
 cleanvars() {
 	unset OS
+	unset UNINSTALL
 }
 
 determineOS() {
@@ -62,6 +91,10 @@ isBashCompletionInstalled() {
 
 installBashCompletion() {
 	sudo cp etc/bash_completion/ghi $(getBashCompletionInstallDir)/ghi
+}
+
+uninstallBashCompletion() {
+	sudo rm $(getBashCompletionInstallDir)/ghi
 }
 
 main $@
