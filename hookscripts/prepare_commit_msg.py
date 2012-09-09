@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueDisplayBuilder
-
 try:
 	from subprocess_helper import getCmd
+	from Issue import IssueDisplayBuilder
+	from Issue import Issue
 	import config
 except:
 	print "Cannot find necessary modules / packages in $PYTHONPATH"
@@ -90,8 +90,20 @@ def buildGhiAddMsg(issueID):
 	return "ghi-add Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle()
 
 def buildGhiEditMsg(issueID):
-	issueDisp = IssueDisplayBuilder(issueID)
-	return "ghi-edit Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle()
+	indexIssue = Issue(issueID)
+	headIssue = Issue(issueID,"HEAD")
+	
+	issueDisp = IssueDisplayBuilder(indexIssue)
+
+	if indexIssue.getStatus() != headIssue.getStatus():
+		headIssueDisp = IssueDisplayBuilder(headIssue)
+		msg = ("ghi-edit "
+				+ "(" + headIssueDisp.getStatusStr() + "->" + issueDisp.getStatusStr() + ") " 
+				+ "Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle())
+	else:
+		msg = "ghi-edit Issue #" + issueDisp.getShortIdStr() + ": " + issueDisp.getTitle() 
+	
+	return msg
 
 def buildGhiRmMsg(issueID):
 	issueDisp = IssueDisplayBuilder(issueID)

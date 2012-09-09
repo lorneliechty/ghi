@@ -38,10 +38,11 @@ Hopefully these will also clearly show the speed and power of ghi as well.
 
 ### How to install ghi:
 Installing ghi on your machine is easy. Just clone the repository and put it on your path!
-The project dependencies are kept intentionally minimal (just python 2.7 and git 1.7)
+The project dependencies are kept intentionally minimal (just python 2.7\* and git 1.7.4)
 
 	git clone git://github.com/lorneliechty/ghi.git /path/to/ghi
-	export PATH=$PATH:/path/to/ghi
+	export PATH=$PATH:/path/to/ghi	# add this line to your ~/.bashrc or ~/.bash_profile
+	./install-bashcompletion.sh		# installs bash completion (use --uninstall option to remove bash completion)
 
 ### How to start using ghi in your git repository:
 Adding a bug tracker to your project should be as easy as starting your repository.
@@ -102,3 +103,4 @@ This allows branches, forks, or individual developers to orgranize the Issues as
 ---
 This project is licensed under Apache License, Version 2.0. You may obtain a copy of the license at http://www.apache.org/licenses/LICENSE-2.0
 
+\* You can use python 2.6.5 as long as you install the argprase module first (`sudo pip install argparse`).
