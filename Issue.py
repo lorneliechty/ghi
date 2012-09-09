@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from color import Color
+from identifiers import getFullIssueIdFromLeadingSubstr
 from subprocess_helper import getCmd
 import config
 
@@ -46,11 +47,15 @@ class IssueProto:
 		self._status = status
 	
 class Issue(IssueProto):
-	def __init__(self, identifier):
+	def __init__(self, identifier, ref=None):
 		self._id = identifier
-		
+		self._ref = ref
+
 	def getId(self):
 		return self._id
+	
+	def getRef(self):
+		return self._ref
 	
 	def getTitle(self, peak=True):
 		if not hasattr(self, '_title'):
@@ -107,33 +112,44 @@ class Issue(IssueProto):
 		return self._modifiedAuthorEmail
 	
 	def _loadIssueFile(self):
-		tmp = IssueFile.readIssueFromDisk(
-			config.ISSUES_DIR + '/' + self._id)
+		if self._ref == None:
+			tmp = IssueFile.readIssueFromDisk(
+				config.ISSUES_DIR + '/' + self._id)
+		else:
+			getCmd('git show ' + self.getRef() + ':' + config.mkPathRel(config.ISSUES_DIR) + '/' + self._id 
+					+ ' > ' + config.mkPathRel(config.GHI_DIR) + '/tmpfile')
+			tmp = IssueFile.readIssueFromDisk(config.GHI_DIR + '/tmpfile')
+			getCmd('rm ' + config.GHI_DIR + '/tmpfile')
+		
 		self.setTitle(tmp.getTitle())
 		self.setStatus(tmp.getStatus())
 		self.setDescription(tmp.getDescription())
 		
-	def _loadDates(self):
-			cmd = ('git log'
-				+ ' --topo-order'
-				+ ' --reverse'
-				+ ' --pretty=format:"%H %at %an %ae"'
-				+ ' HEAD'
-				+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
-			commits = getCmd(cmd).split('\n')
-			if commits:
-				self._createdDate = 		commits[0].split()[1]
-				self._createdAuthorName = 	commits[0].split()[2]
-				self._createdAuthorEmail = 	commits[0].split()[3]
+	def _loadDates(self, ref):
+		revision = 'HEAD' if ref == None else ref
+		cmd = ('git log'
+			+ ' --topo-order'
+			+ ' --reverse'
+			+ ' --pretty=format:"%H %at %an %ae"'
+			+ ' ' + revision
+			+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
+		commits = getCmd(cmd).split('\n')
+		if commits:
+			self._createdDate = 		commits[0].split()[1]
+			self._createdAuthorName = 	commits[0].split()[2]
+			self._createdAuthorEmail = 	commits[0].split()[3]
 
-				self._modifiedDate = 		commits[-1].split()[1]
-				self._modifiedAuthorName = 	commits[-1].split()[2]
-				self._modifiedAuthorEmail = commits[-1].split()[3]
+			self._modifiedDate = 		commits[-1].split()[1]
+			self._modifiedAuthorName = 	commits[-1].split()[2]
+			self._modifiedAuthorEmail = commits[-1].split()[3]
 
 
 class IssueDisplayBuilder:
-	def __init__(self, identifier):
-		self._issue = Issue(identifier)
+	def __init__(self, issue):
+		if issue and type(issue) is str:
+			self._issue = Issue(issue)
+		else:
+			self._issue = issue
 	
 	def getFullIssueDisplay(self):
 		lines = []

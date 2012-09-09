@@ -74,6 +74,10 @@ class _Module:
 			self._GIT_EDITOR = getCmd('git config core.editor')
 		return self._GIT_EDITOR
 
+	def mkPathRel(self,path):
+		return path.replace(self.GIT_ROOT + "/", "")
+	
+
 # The same properties from above are listed here simply so that
 # tab completions and auto-discovery features of Eclipse don't
 # break due to the fact that we're swapping the module reference
@@ -86,6 +90,8 @@ GROUPS_DIR = _Module.GROUPS_DIR
 GIT_EDITOR = _Module.GIT_EDITOR
 
 STATUS_OPTS = _Module.STATUS_OPTS
+
+mkPathRel = _Module.mkPathRel
 
 if not __name__ == "__main__":
 	# This craziness makes all of our PROPERTIES in the _Module class
