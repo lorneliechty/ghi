@@ -1,23 +1,25 @@
 An ideal minimum set of ghi commands
 ----------------------------------------------------------------------------
-# Initialize ghi within this git
-ghi init
+# What version of ghi are we working with?
+ghi --version
 
-# List issues in read-only format (equivalent to git log)
-git issue
-git issue <id>
-git issue <ref>[..<ref>]
-git issue -p <priority>
-git issue -a "author" 
-git issue -- path/to/src/
-git issue --group			# list groups this issue belongs to
-git issue
+# Initialize ghi within this git
+ghi init [--ghi_path <path/to/ghi>]
+
+# List of known issues
+git issue					# list all known issues for HEAD
+git issue <id>				# give details for a specific issue
+git issue <ref>[..<ref>]	# list issues that exist at the time of a given git ref (or range)
+git issue <groupname>		# list issues filed under a given groupname
+git issue -a "author"		# list issues filed by given author 
+git issue -- path/to/src/	# list issues that reference files within this source tree
 
 # Add a new issues
 git issue add [-d <Description>] [-g <groupname>] <title>
 
 # Edit an existing issue
 git issue edit <id> -t "Title"
+git issue edit <id> --status <status>
 
 # Remove an issue
 git issue rm <id>	# resolves as closed?
@@ -26,10 +28,8 @@ git issue rm <id>	# resolves as closed?
 git issue group						# list all groups in working copy 
 git issue group <ref>				# list all groups under a git ref
 git issue group <id> "group-name"	# put an issue in an existing group
+git issue group <id> "group-name"/"subgroup-name"	# put an issue into a subgroup of a group
 
-Helper commands of git issue edit
----------------------------------
-git issue assign <id> "Author"
-
-git issue resolve <resolution>
+# Show history of an issue
+git issue log <id>
 

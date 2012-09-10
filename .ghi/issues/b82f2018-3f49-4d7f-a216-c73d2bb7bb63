@@ -1,0 +1,12 @@
+ISSUE-1
+0
+Need extensible command aliasing for more-complex grouping workflows?
+Prioritizing via groups is pretty straight forward, but I can easily imagine more complex workflows that people may want to use.
+
+For example: Imagine assigning bugs to someone via groups.
+You could tell the person to go get all bugs under their name, but you'd still have to do use a group command to file everything, which may feel awkward:
+`git issue group <id> <assignee>`
+... what if you could use:
+`git issue assign <id> <assignee>` and the issue got auto-magically placed under assigned/<assignee>... AND, the assignee field was tab-completed based on existing author names in the git history!
+
+The big question is whether a helper command like "assign" would be part of core ghi command set or if ghi could be easily extended similar to git porcelain commands.

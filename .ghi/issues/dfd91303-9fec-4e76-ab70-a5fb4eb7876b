@@ -1,4 +1,4 @@
 ISSUE-1
 0
-Bring back support for auto-commits
+Bring back support for auto-commits (provide them as an option)
 Auto-commits were added for pretty much every operation, but then later removed to provide better issue workflows. It might be nice to add them back in again if an appropriate workflow can be identified.
