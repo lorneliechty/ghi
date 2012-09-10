@@ -185,6 +185,7 @@ function test_ls() {
 	fi
 
 	issue_to_be_shown=$($GHI_CMD_ALIAS add "Issue to be shown" -d "description of issue!")
+	$GHI_CMD_ALIAS $issue_to_be_shown
 	git commit -m "testing issue display"
 	$GHI_CMD_ALIAS $issue_to_be_shown
 }

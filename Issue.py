@@ -133,8 +133,9 @@ class Issue(IssueProto):
 			+ ' --pretty=format:"%H %at %an %ae"'
 			+ ' ' + revision
 			+ ' -- ' + config.ISSUES_DIR + "/" + self.getId())
-		commits = getCmd(cmd).split('\n')
+		commits = getCmd(cmd)
 		if commits:
+			commits = commits.split('\n')
 			self._createdDate = 		commits[0].split()[1]
 			self._createdAuthorName = 	commits[0].split()[2]
 			self._createdAuthorEmail = 	commits[0].split()[3]
@@ -142,7 +143,14 @@ class Issue(IssueProto):
 			self._modifiedDate = 		commits[-1].split()[1]
 			self._modifiedAuthorName = 	commits[-1].split()[2]
 			self._modifiedAuthorEmail = commits[-1].split()[3]
+		else:
+			self._createdDate = 		0
+			self._createdAuthorName = 	getCmd("git config user.name")
+			self._createdAuthorEmail = 	getCmd("git config user.email")
 
+			self._modifiedDate = 		0
+			self._modifiedAuthorName = 	getCmd("git config user.name")
+			self._modifiedAuthorEmail = getCmd("git config user.email")
 
 class IssueDisplayBuilder:
 	def __init__(self, issue):
@@ -212,9 +220,13 @@ class IssueDisplayBuilder:
 		return self._issue.getDescription()
 				
 	def getCreatedDateStr(self):
+		if self._issue.getCreatedDate() == 0:
+			return "Not yet committed"
 		return self._formatDateFromTimestamp(self._issue.getCreatedDate())
 	
 	def getModifiedDateStr(self):
+		if self._issue.getModifiedDate() == 0:
+			return "Not yet committed"
 		return self._formatDateFromTimestamp(self._issue.getModifiedDate())
 	
 	def getCreatedAuthorStr(self):
