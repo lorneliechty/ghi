@@ -125,8 +125,8 @@ class Issue(IssueProto):
 		self.setStatus(tmp.getStatus())
 		self.setDescription(tmp.getDescription())
 		
-	def _loadDates(self, ref):
-		revision = 'HEAD' if ref == None else ref
+	def _loadDates(self):
+		revision = 'HEAD' if self.getRef() == None else self.getRef()
 		cmd = ('git log'
 			+ ' --topo-order'
 			+ ' --reverse'
