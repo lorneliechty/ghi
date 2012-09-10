@@ -188,25 +188,23 @@ _ghi_rm() {
 }
 
 _ghi_group() {
-	# HACK HACK HACK
-	# Need to get rid of the magic number here because it won't work
-	# if the call is directly through ghi rather than git-issue alias
-	if [ ${#words[*]} -le 4 ]; then
+	case "$prev" in
+	group)
 		__gitcomp "$(__ghi_issues_short_and_groups)"
 		return
-	fi
-
-	if [ $(__ghi_is_str_groupname "${words[3]}") = 1 ]; then
+		;;
+	-d)
+		__gitcomp "$(__ghi_issues_short_and_groups)"
 		return
-	fi
+		;;
+	*)
+		if [ $(__ghi_is_str_groupname "$prev") = 1 ]; then
+			return
+		fi
 
-	# HACK HACK HACK
-	# Need to get rid of the magic number here because it won't work
-	# if the call is directly through ghi rather than git-issue alias
-	if [[ ${#words[*]} -eq 5 ]]; then
 		__gitcomp "$(__ghi_groups)"
-		return
-	fi
+		;;
+	esac
 }
 
 _git_issue() {
