@@ -183,6 +183,11 @@ function test_ls() {
 		git config --bool issue.ls.group $default_group
 		git config issue.ls.sort $default_sort
 	fi
+
+	issue_to_be_shown=$($GHI_CMD_ALIAS add "Issue to be shown" -d "description of issue!")
+	$GHI_CMD_ALIAS $issue_to_be_shown
+	git commit -m "testing issue display"
+	$GHI_CMD_ALIAS $issue_to_be_shown
 }
 
 function test_group() {

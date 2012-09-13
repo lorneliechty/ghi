@@ -1,0 +1,4 @@
+ISSUE-1
+2
+Crash when listing specifics of issue using 'git issue <id>'
+
