@@ -15,9 +15,12 @@
 # limitations under the License.
 
 # Don't add our messages if we're using a commit message supplied from -m / -f or a merge
-if [[ $2 != "message" && $2 != "merge" ]]; then
+case "$2" in
+"message"|"merge")
+	;;
+*)
 	GHI_DIR=$(which $(git config alias.issue | cut -c 2-) | sed s/.ghi$//)
-	#GHI_DIR=which $(git config alias.issue | cut -c 2-) | sed s/.ghi$//
 	export PYTHONPATH=$GHI_DIR:$PYTHONPATH
 	python $GHI_DIR/hookscripts/prepare_commit_msg.py $1
-fi
+	;;
+esac
