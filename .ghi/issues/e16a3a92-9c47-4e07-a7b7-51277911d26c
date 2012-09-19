@@ -1,4 +1,4 @@
 ISSUE-1
-0
-ghi-init does not auto-commit on Ubuntu 10.04
-
+2
+ghi-init does not auto-commit if user has not set their user.name / user.email config
+Best way to handle this is probably just to print out the error for the git-commit command so that the user sees what is wrong.

@@ -66,6 +66,6 @@ def cleanWcAndCommitGhiDir(msg):
 	getCmd("git add " + config.GHI_DIR)
 	
 	cmdName = _getCallerModuleName()
-	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
+	print getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
 	
 	_restoreWc()
