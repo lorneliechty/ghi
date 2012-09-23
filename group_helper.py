@@ -37,6 +37,14 @@ def getIssueIdsInGroups():
 	
 	return ret
 
+def getIssueIdsInGroup(groupname):
+	filepath = config.GROUPS_DIR + "/" + groupname
+	with open(filepath, 'rb') as f:
+		lines = f.readlines()
+		ret = [line.rstrip() for line in lines]
+
+	return ret
+
 def getGroupsForIssueId(issueID):
 	groupPaths = getCmd("git grep --name-only " 
 				+ issueID + " -- " + config.GROUPS_DIR)

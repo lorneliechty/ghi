@@ -107,6 +107,16 @@ __ghi_is_str_groupname() {
 	echo 0;
 }
 
+__ghi_is_str_leading_substr_of_group() {
+	for id in $(__ghi_groups); do
+		if [[ "$id" =~ $1*  ]]; then
+			echo 1; return 0
+		fi
+	done
+
+	echo 0; return 1
+}
+
 __ghi_issues_short_and_groups() {
 	__ghi_issues_short
 	__ghi_groups
@@ -230,9 +240,10 @@ _git_issue() {
 				fi
 			done
 
-			# If no subcommand found... see if our current word is the start of an issue id
-			if [ $(__ghi_is_str_leading_substr_of_issue_id "$cur") = 1 ]; then
-				__gitcomp "$(__ghi_issues_short)"
+			# If no subcommand found... see if our current word is the start of an issue id or group
+			if [ $(__ghi_is_str_leading_substr_of_issue_id "$cur") = 1 \
+				 -o $(__ghi_is_str_leading_substr_of_group "$cur") = 1 ]; then
+				__gitcomp "$(__ghi_issues_short_and_groups)"
 				return
 			fi
 

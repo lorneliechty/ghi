@@ -74,7 +74,12 @@ def _getFilteredListofIssueIDs(args):
 	if args.id:
 		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
 		if issueId == None:
-			return None
+			# See if this is a group ID
+			if group_helper.groupExists(args.id):
+				return group_helper.getIssueIdsInGroup(args.id)
+			else:
+				return None
+			
 		return [issueId]
 	
 	else:
@@ -114,25 +119,34 @@ def _displayUnGrouped(issueIDs):
 def _displayGrouped(issueIDs):
 	groups = getIssueIdsInGroups()
 
+	grouped = {}
 	ungrouped = []
 	for issueID in issueIDs:
 		isUngrouped = True
 		for g in groups:
 			if groups[g].count(issueID):
 				isUngrouped = False
+				if not grouped.has_key(g):
+					grouped[g] = []
+				grouped[g].extend([issueID])
 				break
 		if isUngrouped:
 			ungrouped.extend([issueID])
 
-	for g in groups:
+	first = True
+	for g in grouped:
+		if first:	first = False
+		else:		print ""
+
 		print g
-		for issueID in groups[g]:
+		for issueID in grouped[g]:
 			sys.stdout.write(IssueDisplayBuilder(issueID).getOneLineStr() + '\n')
-		print ""
 	
-	print "ungrouped"
-	for issueID in ungrouped: 
-		print IssueDisplayBuilder(issueID).getOneLineStr()
+	if len(ungrouped) > 0:
+		if len(grouped) > 0: print ""
+		print "ungrouped"
+		for issueID in ungrouped: 
+			print IssueDisplayBuilder(issueID).getOneLineStr()
 
 if (__name__ == "__main__"):
 	execute()
