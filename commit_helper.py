@@ -54,8 +54,11 @@ def commit(msg):
 def addToIndex(path):
 	getCmd("git add " + path)
 
-def remove(path):
-	getCmd("git rm " + path)
+def remove(path, force=False):
+	if force:
+		getCmd("git rm -f " + path)
+	else:
+		getCmd("git rm " + path)
 
 def cleanWcAndCommitGhiDir(msg):
 	'''Cleans the git working copy and creates a git commit for the

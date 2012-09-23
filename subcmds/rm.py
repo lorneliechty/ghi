@@ -26,6 +26,11 @@ class Args:
 	"""Wrapper class that defines the command line args"""
 	ID="id"
 	ID_HELP="Issue ID"
+	
+	OPT_FORCE="--force"
+	OPT_FORCE_SHORT="-f"
+	OPT_FORCE_HELP="Force the removal of an issue. Useful if issue has never been committed"
+	OPT_FORCE_ACTION="store_true"
 
 def execute(args):
 	if (args.id):
@@ -38,7 +43,7 @@ def execute(args):
 		issueTitle = Issue(issueID).getTitle()
 		
 		# Remove the issue
-		commit_helper.remove(issuePath)
+		commit_helper.remove(issuePath, args.force)
 		
 		# Remove the issue from any groups that contained it
 		groups = getGroupsForIssueId(issueID)

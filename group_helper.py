@@ -20,11 +20,14 @@ import dircache
 import os
 
 def groupExists(groupname):
-	return os.path.exists(getPathForGroup(groupname))
+	if groupname:
+		return os.path.exists(getPathForGroup(groupname))
+	return None
 
 def getPathForGroup(groupname):
-	groupPath = config.GROUPS_DIR + "/" + groupname
-	return groupPath
+	if groupname:
+		return config.GROUPS_DIR + "/" + groupname
+	return None
 
 def getIssueIdsInGroups():
 	ret = {};

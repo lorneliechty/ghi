@@ -36,13 +36,17 @@ class Args:
 	
 	OPT_DELETE_SHORT="-d"
 	OPT_DELETE_HELP="Delete an issue from a group or a group completely"
+	
+	OPT_FORCE_DELETE_SHORT="-D"
+	OPT_FORCE_DELETE_HELP="Force the deletion of an issue or group. Useful if issue or group has never been committed"
 
 def execute(args):
 	# Are we deleting something?
-	if args.d != None:
+	if args.d or args.D:
 		# see if we're deleting an existing issue from a group
-		issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.d)
-		if issueID != None:
+		issueToDelete = args.d if args.d else args.D
+		issueID = identifiers.getFullIssueIdFromLeadingSubstr(issueToDelete)
+		if issueID:
 			# HACK HACK HACK
 			# The command line parsing here is totally messed up and so
 			# rather than using the groupname we have to pretend here
@@ -59,10 +63,13 @@ def execute(args):
 		# see if we're deleting a group entirely
 		if group_helper.groupExists(args.d):
 			getCmd('git rm "' + group_helper.getPathForGroup(args.d) + '"')
+		elif group_helper.groupExists(args.D):
+			getCmd('git rm -f "' + group_helper.getPathForGroup(args.D) + '"')
+		else:		
 			return None
 		
 		# tried to delete, but we couldn't figure out what...
-		print "Could not delete " + args.d
+		print "Could not delete " + args.d if args.d else args.D
 		return None
 	
 	if args.groupname == None and args.id == None:

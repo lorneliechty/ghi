@@ -111,6 +111,11 @@ cmd_rm = cmds.add_parser(subcmds.rm.NAME,
 cmd_rm.add_argument(subcmds.rm.Args.ID,
 					help=subcmds.rm.Args.ID_HELP)
 
+cmd_rm.add_argument(subcmds.rm.Args.OPT_FORCE_SHORT,
+					subcmds.rm.Args.OPT_FORCE,
+					action=subcmds.rm.Args.OPT_FORCE_ACTION,
+					help=subcmds.rm.Args.OPT_FORCE_HELP)
+
 cmd_rm.set_defaults(func=subcmds.rm.execute)
 
 # Create the 'group' command parser
@@ -126,6 +131,9 @@ cmd_group.add_argument(subcmds.group.Args.GROUPNAME,
 
 cmd_group.add_argument(subcmds.group.Args.OPT_DELETE_SHORT,
 					help=subcmds.group.Args.OPT_DELETE_HELP)
+
+cmd_group.add_argument(subcmds.group.Args.OPT_FORCE_DELETE_SHORT,
+					help=subcmds.group.Args.OPT_FORCE_DELETE_HELP)
 
 cmd_group.set_defaults(func=subcmds.group.execute)
 

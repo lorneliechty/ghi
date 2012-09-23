@@ -2,3 +2,9 @@
 	s0 = New
 	s1 = In progress
 	s2 = Fixed
+[group]
+	priority = critical
+	priority = very high
+	priority = high
+	priority = medium
+	priority = low
