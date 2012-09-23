@@ -234,7 +234,7 @@ _git_issue() {
 		*)
 			# If no subcommand found... see if our current word is the start of a subcommand
 			for cmd in $subcommands; do
-				if [[ "$cmd" =~ $cur* ]]; then
+				if [[ "$cmd" =~ $cur ]]; then
 					__gitcomp "$subcommands"
 					return
 				fi
