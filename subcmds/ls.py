@@ -22,6 +22,7 @@ import config
 import dircache
 import identifiers
 import sys
+import group_helper
 
 NAME = "ls"
 HELP = "List issues"
@@ -40,19 +41,15 @@ class Args:
 	OPT_SORT_HELP="Sort issues"
 
 def execute(args):
-	if args.id:
-		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
-		if issueId == None:
-			print "Could not find issue: " + args.id
-			return None
-
-		print IssueDisplayBuilder(issueId).getFullIssueDisplay()
-
+	issueIDs = _getFilteredListofIssueIDs(args)
+	if issueIDs == None:
+		print "Could not find issue: " + args.id
+		return
+	
+	elif len(issueIDs) == 1:
+		print IssueDisplayBuilder(issueIDs[0]).getFullIssueDisplay()
+			
 	else:
-		issueIDs = _getAllIssueIDs()
-		if len(issueIDs) == 0:
-			return
-
 		# We may have a lot of issues in the list that would make the output
 		# run pretty long, therefore page it.
 		PageOutputBeyondThisPoint()
@@ -72,7 +69,17 @@ def execute(args):
 			_displayGrouped(issueIDs)		
 		else:
 			_displayUnGrouped(issueIDs)
-			
+
+def _getFilteredListofIssueIDs(args):
+	if args.id:
+		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+		if issueId == None:
+			return None
+		return [issueId]
+	
+	else:
+		return _getAllIssueIDs()
+
 def _getAllIssueIDs():
 	issueIDs = dircache.listdir(config.ISSUES_DIR)
 	try:

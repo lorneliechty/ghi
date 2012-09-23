@@ -19,7 +19,7 @@ import config
 import subcmds
 import sys
 
-GHI_VERSION = "0.2.2"
+GHI_VERSION = "0.3.0"
 def printVersion():
 	print "ghi version " + GHI_VERSION
 	
