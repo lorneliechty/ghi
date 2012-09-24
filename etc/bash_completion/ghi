@@ -194,7 +194,17 @@ _ghi_edit() {
 }
 
 _ghi_rm() {
-	__gitcomp "$(__ghi_issues_short)"
+	__git_has_doubledash && return
+
+	case "$cur" in
+	--*)
+		__gitcomp "--force"
+		return
+		;;
+	*)
+		__gitcomp "$(__ghi_issues_short)"
+	;;
+	esac
 }
 
 _ghi_group() {

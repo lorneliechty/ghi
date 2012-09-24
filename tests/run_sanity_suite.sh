@@ -214,8 +214,15 @@ function test_group() {
 	issue_to_rm_from_group_2=$($GHI_CMD_ALIAS add "Issue to group" --group "ghi-group test group")
 	git commit -m "Add Issues for testing ghi-group"
 	$GHI_CMD_ALIAS rm $issue_to_rm_from_group
-	$GHI_CMD_ALIAS rm $issue_to_rm_from_group_2	# Should also remove the group
+	$GHI_CMD_ALIAS rm -f $issue_to_rm_from_group_2	# Have to force removal of this issue since the previous group change was uncommmitted
 	git commit -m "Testing multi-issue remove to remove group"
+
+	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" -g "test group")
+	$GHI_CMD_ALIAS group -d "test group"		# Should not remove group (because it is not yet committed)
+	$GHI_CMD_ALIAS group -D "test group"		# Should remove group
+	$GHI_CMD_ALIAS group $issue_to_rm_from_group "test group"	# put the issue back in the group
+	$GHI_CMD_ALIAS rm $issue_to_rm_from_group	# Should not remove issue or group (because they are not yet committed)
+	$GHI_CMD_ALIAS rm --force $issue_to_group	# Shoudl remove both issue and group
 
 	$GHI_CMD_ALIAS --group
 }
@@ -238,6 +245,10 @@ function test_rm() {
 	
 	$GHI_CMD_ALIAS rm $issue_to_rm
 	git commit -m "Issue added with --group removed with ghi-rm"
+
+	issue_to_rm=$($GHI_CMD_ALIAS add "Issue to rm")
+	$GHI_CMD_ALIAS rm $issue_to_rm			# Should not remove issue
+	$GHI_CMD_ALIAS rm --force $issue_to_rm	# Should remove issue
 }
 
 set -e	# Exit immediately if there is an error... don't keep going

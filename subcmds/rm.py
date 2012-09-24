@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from group_helper import getGroupsForIssueId, rmIssueInGroup
-from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
 from Issue import Issue
+import group_helper
+from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
 import commit_helper
 
 NAME = "rm"
@@ -39,18 +39,29 @@ def execute(args):
 			print "Could not find issue: " + args.id
 			return None
 		
+		# Remove the issue from any groups that contained it
+		groups = group_helper.getGroupsForIssueId(issueID)
+		
+		# If we're not forcing the remove, then we need to double-check
+		# to make sure that we can actually remove the issue from each
+		# group without breaking things
+		for group in groups:
+			if not group_helper.canRmIssueFromGroup(issueID,group,args.force):
+				# Can't perform this operation without a force!
+				print "Cannot remove issue from group " + group + " without force"
+				return None
+				
+		# All clear to remove the issue!... groups first if you please...
+		for group in groups: 
+			group_helper.rmIssueInGroup(issueID,group,args.force)
+			# HACK HACK HACK
+			# Should be executing a git command here to add the
+			# subsequent group changes to the index, but I'm taking
+			# a shortcut for the moment
+		
 		issuePath = getPathFromId(issueID)
 		issueTitle = Issue(issueID).getTitle()
 		
 		# Remove the issue
 		commit_helper.remove(issuePath, args.force)
-		
-		# Remove the issue from any groups that contained it
-		groups = getGroupsForIssueId(issueID)
-		for group in groups: 
-			rmIssueInGroup(issueID,group)
-			# HACK HACK HACK
-			# Should be executing a git command here to add the
-			# subsequent group changes to the index, but I'm taking
-			# a shortcut for the moment
 		

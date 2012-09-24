@@ -41,11 +41,9 @@ def getIssueIdsInGroups():
 	return ret
 
 def getIssueIdsInGroup(groupname):
-	filepath = config.GROUPS_DIR + "/" + groupname
-	with open(filepath, 'rb') as f:
+	with open(getPathForGroup(groupname), 'rb') as f:
 		lines = f.readlines()
 		ret = [line.rstrip() for line in lines]
-
 	return ret
 
 def getGroupsForIssueId(issueID):
@@ -76,26 +74,42 @@ def addIssueToGroup(issueID, groupname):
 	# Issue not already in group, so add it
 	with open(path, "ab") as f:
 		f.write(issueID + "\n")
+		
+def canRmIssueFromGroup(issueID, groupname, force=False):
+	if force:
+		return True
+	
+	groupIDs = getIssueIdsInGroup(groupname)
+	
+	if groupIDs.count(issueID) == 0 or len(groupIDs) == 0:
+		return False
+	
+	# If there is more than one issue in the group we can always
+	# successfully remove (assuming the issue is in this group)
+	if len(groupIDs) > 1:
+		return True
+	
+	# If this group only has one issue and we're trying to remove
+	# it then we have to remove the group file as well. If this is
+	# the case and the group is already modified in the git
+	# index then we need a force to make this happen
+	else: # len(groupIDs) == 1
+		if getCmd('git status --porcelain -- ' + getPathForGroup(groupname))[0] != " ":
+			return False
+	
+	return True
 
-def rmIssueInGroup(issueID, groupname):
-	with open(getPathForGroup(groupname), "rb") as f:
-		lines = f.readlines()
-		groupIDs = [line.rstrip() for line in lines]
+def rmIssueInGroup(issueID, groupname, force=False):
+	groupIDs = getIssueIdsInGroup(groupname)
 	
 	# If we're removing the last issue in a file, then rm the file
 	if len(groupIDs) == 1 and groupIDs[0] == issueID:
 		# HACK HACK HACK
 		# Should not be executing a git command here
-		#
-		# Another Hackish note...
-		# It's possible for the user, when they run multiple 
-		# ghi-rm commands in a row without committing, to here
-		# try to remove the group file when changes to it are
-		# already staged in the index. Really we should try to
-		# get confirmation from the user in this scenario (maybe?)
-		# ... but for now we're just going to force the remove
-		# with '-f'
-		getCmd('git rm -f "' + getPathForGroup(groupname) + '"')
+		if force:
+			getCmd('git rm -f "' + getPathForGroup(groupname) + '"')
+		else:
+			getCmd('git rm "' + getPathForGroup(groupname) + '"')
 	else:
 		with open(getPathForGroup(groupname), "wb") as f:
 			for identifier in groupIDs:
