@@ -1,6 +1,6 @@
 ISSUE-1
 0
-Need extensible command aliasing for more-complex grouping workflows?
+Add support for ghi command extensions
 Prioritizing via groups is pretty straight forward, but I can easily imagine more complex workflows that people may want to use.
 
 For example: Imagine assigning bugs to someone via groups.

@@ -1,4 +1,4 @@
 ISSUE-1
 0
-Handle resolving duplicate issues
-
+Handle resolving duplicate issues (command extension)
+Should be handled through a ghi command extension that applies some porcelain wrapping on top of ghi-edit / ghi-rm
