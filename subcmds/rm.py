@@ -15,9 +15,10 @@
 # limitations under the License.
 
 from Issue import Issue
-import group_helper
 from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
+from subprocess_helper import getCmd
 import commit_helper
+import group_helper
 
 NAME = "rm"
 HELP = "Remove an issue"
@@ -39,6 +40,14 @@ def execute(args):
 			print "Could not find issue: " + args.id
 			return None
 		
+		# See if we can remove this issue at all without a --force
+		issuePath = getPathFromId(issueID)
+		if not args.force:
+			issueStatus = getCmd("git status --porcelain -- " + issuePath)
+			if issueStatus and issueStatus[0] =='A':
+				print "Cannot remove issue without --force"
+				return None
+		
 		# Remove the issue from any groups that contained it
 		groups = group_helper.getGroupsForIssueId(issueID)
 		
@@ -48,7 +57,7 @@ def execute(args):
 		for group in groups:
 			if not group_helper.canRmIssueFromGroup(issueID,group,args.force):
 				# Can't perform this operation without a force!
-				print "Cannot remove issue from group " + group + " without force"
+				print "Cannot remove issue from group '" + group + "' without --force"
 				return None
 				
 		# All clear to remove the issue!... groups first if you please...
@@ -59,7 +68,6 @@ def execute(args):
 			# subsequent group changes to the index, but I'm taking
 			# a shortcut for the moment
 		
-		issuePath = getPathFromId(issueID)
 		issueTitle = Issue(issueID).getTitle()
 		
 		# Remove the issue
