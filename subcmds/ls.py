@@ -60,7 +60,7 @@ def execute(args):
 			
 		# Check to see if a default issue sort has been configured for this repository
 		else:
-			sort = getCmd('git config issue.ls.status')
+			sort = getCmd('git config issue.ls.sort')
 			if sort != None:
 				issueIDs = _sortIssues(issueIDs, sort)
 
