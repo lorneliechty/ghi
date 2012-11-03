@@ -129,7 +129,6 @@ def _displayGrouped(issueIDs):
 				if not grouped.has_key(g):
 					grouped[g] = []
 				grouped[g].extend([issueID])
-				break
 		if isUngrouped:
 			ungrouped.extend([issueID])
 
