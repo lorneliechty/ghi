@@ -1,4 +1,32 @@
 ISSUE-1
 0
-Groups of groups
+Groups of groups (a.k.a subgroups)
+Latest thoughts on this topic after deep contemplation:
 
+	* It seems like one of the most convenient ways to handle subgroups is via a delimiter in the group name
+		* Examples: 
+			* assignee.lorne
+			* priority.high
+	
+	* There are problems with this approach though:
+		* What delimiter to use may be based on personal preference:
+			* '.'
+			* ':'
+			* ';'
+			* ... though maybe this can be handled via config with an appropriate default
+				* If we do handle via config, it will need to be a ghi config, not git because the chosen delimiter must be version controlled
+
+		* It may be difficult to keep issues from being dual-listed under two subgroups of the same group
+			* Example: an issue filed under priority.high and priority.medium
+			* We could maybe solve this via logic in ghi-group, but that won't be a good solution for git-merge
+				* Maybe for git-merge we add a pre-commit hookscript that will verify our groups for us
+					* This may cause problems for people that like to run in complex git environments wth lots of hookscripts
+	
+	* Implementing subgroups using this approach will keep the ghi file structure simple... which is nice
+
+	* "Default" subgrouping could be handled via extension commands that work with a standard subgrouping structure
+		* Examples:
+			* ghi-priority files issues under 'priority.*'
+			* ghi-assign files issues under 'assinee.*'
+	
+In general, I like this approach though... it seems like a clean way of doing this without overcomplicating either the problem or the solution.
