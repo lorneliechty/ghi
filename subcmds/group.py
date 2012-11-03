@@ -47,12 +47,44 @@ def execute(args):
 		issueToDelete = args.d if args.d else args.D
 		issueID = identifiers.getFullIssueIdFromLeadingSubstr(issueToDelete)
 		if issueID:
+			force = False if args.d else True
+			
+			# If no groupname is given, then we will remove from all groups
+			# ... notice the hack here where args.id is holding the groupname
+			# due to the currently lame and hacky argparsing
+			if not args.id:
+				# Remove the issue from any groups that contained it
+				groups = group_helper.getGroupsForIssueId(issueID)
+				
+				if len(groups) == 0:
+					print "No groups to delete issue from!"
+					return None
+				
+				# If we're not forcing the remove, then we need to double-check
+				# to make sure that we can actually remove the issue from each
+				# group without breaking things
+				for group in groups:
+					if not group_helper.canRmIssueFromGroup(issueID,group,force):
+						# Can't perform this operation without a force!
+						print "Cannot delete issue from group '" + group + "' without force option, '-D'"
+						return None
+				
+				# All clear to remove the issue!... groups first if you please...
+				for group in groups: 
+					group_helper.rmIssueInGroup(issueID,group,force)
+					# HACK HACK HACK
+					# Should be executing a git command here to add the
+					# subsequent group changes to the index, but I'm taking
+					# a shortcut for the moment
+
+				return None
+			
 			# HACK HACK HACK
 			# The command line parsing here is totally messed up and so
 			# rather than using the groupname we have to pretend here
 			# that the id is the groupname... the command line just
 			# needs to be rewritten :(
-			group_helper.rmIssueInGroup(issueID, args.id)
+			group_helper.rmIssueInGroup(issueID, args.id, force)
 			
 			# HACK HACK HACK
 			# Should be executing a git command here to add the
@@ -63,13 +95,14 @@ def execute(args):
 		# see if we're deleting a group entirely
 		if group_helper.groupExists(args.d):
 			getCmd('git rm "' + group_helper.getPathForGroup(args.d) + '"')
+			return None
 		elif group_helper.groupExists(args.D):
 			getCmd('git rm -f "' + group_helper.getPathForGroup(args.D) + '"')
-		else:		
 			return None
 		
 		# tried to delete, but we couldn't figure out what...
-		print "Could not delete " + args.d if args.d else args.D
+		groupname = args.d if args.d else args.D
+		print "Could not delete '" + groupname  + "' without force option, '-D'"
 		return None
 	
 	if args.groupname == None and args.id == None:

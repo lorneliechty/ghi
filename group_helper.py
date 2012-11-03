@@ -119,3 +119,12 @@ def rmIssueInGroup(issueID, groupname, force=False):
 		# HACK HACK HACK
 		# Should not be executing a git command here
 		getCmd('git add "' + getPathForGroup(groupname) + '"')
+		
+def rmIssueFromGroups(issueID, force=False):
+	groups = getGroupsForIssueId(issueID)
+	
+	pass
+
+
+
+
