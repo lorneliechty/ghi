@@ -32,6 +32,21 @@ class Args:
 	OPT_FORCE_SHORT="-f"
 	OPT_FORCE_HELP="Force the removal of an issue. Useful if issue has never been committed"
 	OPT_FORCE_ACTION="store_true"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_rm = parser.add_parser(NAME, 
+								 help=HELP)
+		
+		cmd_rm.add_argument(Args.ID,
+							help=Args.ID_HELP)
+		
+		cmd_rm.add_argument(Args.OPT_FORCE_SHORT,
+							Args.OPT_FORCE,
+							action=Args.OPT_FORCE_ACTION,
+							help=Args.OPT_FORCE_HELP)
+		
+		cmd_rm.set_defaults(func=execute)
 
 def execute(args):
 	if (args.id):

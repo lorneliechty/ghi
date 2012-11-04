@@ -39,6 +39,26 @@ class Args:
 	
 	OPT_FORCE_DELETE_SHORT="-D"
 	OPT_FORCE_DELETE_HELP="Force the deletion of an issue or group. Useful if issue or group has never been committed"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_group = parser.add_parser(NAME, help=HELP)
+		
+		cmd_group.add_argument(Args.ID,
+							help=Args.ID_HELP,
+							nargs=Args.ID_NARGS)
+		
+		cmd_group.add_argument(Args.GROUPNAME,
+							help=Args.GROUPNAME_HELP,
+							nargs=Args.GROUPNAME_NARGS)
+		
+		cmd_group.add_argument(Args.OPT_DELETE_SHORT,
+							help=Args.OPT_DELETE_HELP)
+		
+		cmd_group.add_argument(Args.OPT_FORCE_DELETE_SHORT,
+							help=Args.OPT_FORCE_DELETE_HELP)
+		
+		cmd_group.set_defaults(func=execute)
 
 def execute(args):
 	# Are we deleting something?

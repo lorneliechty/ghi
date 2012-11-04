@@ -40,6 +40,28 @@ class Args:
 	OPT_STATUS="--status"
 	OPT_STATUS_SHORT="-s"
 	OPT_STATUS_HELP="Status"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_edit = parser.add_parser(NAME,
+								   help=HELP)
+		
+		cmd_edit.add_argument(Args.ID,
+							  help=Args.ID_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_STATUS_SHORT,
+							  Args.OPT_STATUS,
+							  help=Args.OPT_STATUS_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_TITLE_SHORT,
+							  Args.OPT_TITLE,
+							  help=Args.OPT_TITLE_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_DESCRIPTION_SHORT,
+							  Args.OPT_DESCRIPTION,
+							  help=Args.OPT_DESCRIPTION_HELP)
+		
+		cmd_edit.set_defaults(func=execute)
 
 def execute(args):
 	

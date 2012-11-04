@@ -38,104 +38,13 @@ parser.add_argument("--version", action="store_true",
 cmds = parser.add_subparsers(title="subcommands",
 							 help="valid subcommands")
 
-# Create the 'init' command parser
-cmd_init = cmds.add_parser(subcmds.init.NAME,
-						   help=subcmds.init.HELP)
-
-cmd_init.add_argument(subcmds.init.Args.OPT_GHI_PATH,
-					  help=subcmds.init.Args.OPT_GHI_PATH_HELP)
-
-cmd_init.set_defaults(func=subcmds.init.execute)
-
-# Create the 'ls' command parser
-cmd_ls = cmds.add_parser(subcmds.ls.NAME,
-						   help=subcmds.ls.HELP)
-
-cmd_ls.add_argument(subcmds.ls.Args.ID,
-					help=subcmds.ls.Args.ID_HELP,
-					nargs=subcmds.ls.Args.ID_NARGS)
-
-cmd_ls.add_argument(subcmds.ls.Args.OPT_GROUPED,
-					action=subcmds.ls.Args.OPT_GROUPED_ACTION,
-					help=subcmds.ls.Args.OPT_GROUPED_HELP)
-
-cmd_ls.add_argument(subcmds.ls.Args.OPT_SORT,
-					help=subcmds.ls.Args.OPT_SORT)
-
-cmd_ls.set_defaults(func=subcmds.ls.execute)
-
-# Create the 'add' command parser
-cmd_add = cmds.add_parser(subcmds.add.NAME,
-						  help=subcmds.add.HELP)
-
-cmd_add.add_argument(subcmds.add.Args.OPT_GROUP_SHORT,
-					 subcmds.add.Args.OPT_GROUP,
-					 help=subcmds.add.Args.OPT_GROUP_HELP)
-
-cmd_add.add_argument(subcmds.add.Args.TITLE,
-					 nargs=subcmds.add.Args.TITLE_NARGS,
-					 help=subcmds.add.Args.TITLE_HELP)
-
-cmd_add.add_argument(subcmds.add.Args.OPT_DESCRIPTION_SHORT,
-					 subcmds.add.Args.OPT_DESCRIPTION,
-					 help=subcmds.add.Args.OPT_DESCRIPTION_HELP)
-
-cmd_add.set_defaults(func=subcmds.add.execute)
-
-# Create the 'edit' command parser
-cmd_edit = cmds.add_parser(subcmds.edit.NAME,
-						   help=subcmds.edit.HELP)
-
-cmd_edit.add_argument(subcmds.edit.Args.ID,
-					  help=subcmds.edit.Args.ID_HELP)
-
-cmd_edit.add_argument(subcmds.edit.Args.OPT_STATUS_SHORT,
-					  subcmds.edit.Args.OPT_STATUS,
-					  help=subcmds.edit.Args.OPT_STATUS_HELP)
-
-cmd_edit.add_argument(subcmds.edit.Args.OPT_TITLE_SHORT,
-					  subcmds.edit.Args.OPT_TITLE,
-					  help=subcmds.edit.Args.OPT_TITLE_HELP)
-
-cmd_edit.add_argument(subcmds.edit.Args.OPT_DESCRIPTION_SHORT,
-					  subcmds.edit.Args.OPT_DESCRIPTION,
-					  help=subcmds.edit.Args.OPT_DESCRIPTION_HELP)
-
-cmd_edit.set_defaults(func=subcmds.edit.execute)
-
-
-# Create the 'rm' command parser
-cmd_rm = cmds.add_parser(subcmds.rm.NAME, 
-						 help=subcmds.rm.HELP)
-
-cmd_rm.add_argument(subcmds.rm.Args.ID,
-					help=subcmds.rm.Args.ID_HELP)
-
-cmd_rm.add_argument(subcmds.rm.Args.OPT_FORCE_SHORT,
-					subcmds.rm.Args.OPT_FORCE,
-					action=subcmds.rm.Args.OPT_FORCE_ACTION,
-					help=subcmds.rm.Args.OPT_FORCE_HELP)
-
-cmd_rm.set_defaults(func=subcmds.rm.execute)
-
-# Create the 'group' command parser
-cmd_group = cmds.add_parser(subcmds.group.NAME, help=subcmds.group.HELP)
-
-cmd_group.add_argument(subcmds.group.Args.ID,
-					help=subcmds.group.Args.ID_HELP,
-					nargs=subcmds.group.Args.ID_NARGS)
-
-cmd_group.add_argument(subcmds.group.Args.GROUPNAME,
-					help=subcmds.group.Args.GROUPNAME_HELP,
-					nargs=subcmds.group.Args.GROUPNAME_NARGS)
-
-cmd_group.add_argument(subcmds.group.Args.OPT_DELETE_SHORT,
-					help=subcmds.group.Args.OPT_DELETE_HELP)
-
-cmd_group.add_argument(subcmds.group.Args.OPT_FORCE_DELETE_SHORT,
-					help=subcmds.group.Args.OPT_FORCE_DELETE_HELP)
-
-cmd_group.set_defaults(func=subcmds.group.execute)
+# Create the various subcmd parsers
+subcmds.init  .Args.addCmdToParser(cmds)
+subcmds.ls    .Args.addCmdToParser(cmds)
+subcmds.add   .Args.addCmdToParser(cmds)
+subcmds.edit  .Args.addCmdToParser(cmds)
+subcmds.rm    .Args.addCmdToParser(cmds)
+subcmds.group .Args.addCmdToParser(cmds)
 
 # Quick sanity check to see if any subcommand was given at all
 posarg = False

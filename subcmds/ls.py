@@ -39,6 +39,23 @@ class Args:
 	
 	OPT_SORT="--sort"
 	OPT_SORT_HELP="Sort issues"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_ls = parser.add_parser(NAME, help=HELP)
+		
+		cmd_ls.add_argument(Args.ID,
+							help=Args.ID_HELP,
+							nargs=Args.ID_NARGS)
+		
+		cmd_ls.add_argument(Args.OPT_GROUPED,
+							action=Args.OPT_GROUPED_ACTION,
+							help=Args.OPT_GROUPED_HELP)
+		
+		cmd_ls.add_argument(Args.OPT_SORT,
+							help=Args.OPT_SORT)
+		
+		cmd_ls.set_defaults(func=execute)
 
 def execute(args):
 	issueIDs = _getFilteredListofIssueIDs(args)

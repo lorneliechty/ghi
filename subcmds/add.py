@@ -38,6 +38,25 @@ class Args:
 	OPT_GROUP="--group"
 	OPT_GROUP_SHORT="-g"
 	OPT_GROUP_HELP="Group name"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_add = parser.add_parser(NAME,
+								    help=HELP)
+		
+		cmd_add.add_argument(Args.OPT_GROUP_SHORT,
+							 Args.OPT_GROUP,
+							 help=Args.OPT_GROUP_HELP)
+		
+		cmd_add.add_argument(Args.TITLE,
+							 nargs=Args.TITLE_NARGS,
+							 help=Args.TITLE_HELP)
+		
+		cmd_add.add_argument(Args.OPT_DESCRIPTION_SHORT,
+							 Args.OPT_DESCRIPTION,
+							 help=Args.OPT_DESCRIPTION_HELP)
+
+		cmd_add.set_defaults(func=execute)
 
 def execute(args):
 	issue = None
