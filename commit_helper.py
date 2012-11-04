@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from subprocess_helper import getCmd
+from subprocess_helper import getCmd, runCmd
 import config
 import inspect
+import subprocess
 
 def _getCallerModuleName():
 	''''Get the name of the calling subcommand
@@ -45,11 +46,11 @@ def _restoreWc():
 def prepForCommit():
 	_stashWc()
 	
-def commit(msg):
-	cmdName = _getCallerModuleName()
-	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
-	
-	_restoreWc()
+def commit(msg = None):
+	if msg:
+		getCmd('git commit -m "' + msg + '"')
+	else:
+		runCmd('git commit')
 	
 def addToIndex(path):
 	getCmd("git add " + path)

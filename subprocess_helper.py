@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import subprocess
 
 def getCmd(cmd):
@@ -29,4 +30,9 @@ def getCmd(cmd):
 	if ret != '':
 		return ret
 	
+	return None
+
+def runCmd(cmd):
+	os.system(cmd)
+
 	return None

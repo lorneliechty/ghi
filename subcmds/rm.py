@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from Issue import Issue
+from hookscripts import prepare_commit_msg
 from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
 from subprocess_helper import getCmd
 import commit_helper
@@ -33,6 +34,9 @@ class Args:
 	OPT_FORCE_HELP="Force the removal of an issue. Useful if issue has never been committed"
 	OPT_FORCE_ACTION="store_true"
 	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
+	
 	@staticmethod
 	def addCmdToParser(parser):
 		cmd_rm = parser.add_parser(NAME, 
@@ -40,6 +44,10 @@ class Args:
 		
 		cmd_rm.add_argument(Args.ID,
 							help=Args.ID_HELP)
+		
+		cmd_rm.add_argument(Args.OPT_AUTO_COMMIT,
+							action="store_true",
+							help=Args.OPT_AUTO_COMMIT_HELP)
 		
 		cmd_rm.add_argument(Args.OPT_FORCE_SHORT,
 							Args.OPT_FORCE,
@@ -87,4 +95,7 @@ def execute(args):
 		
 		# Remove the issue
 		commit_helper.remove(issuePath, args.force)
+		
+		if args.commit:
+			commit_helper.commit()
 		

@@ -34,6 +34,9 @@ class Args:
 	GROUPNAME_HELP="Group Name"
 	GROUPNAME_NARGS="?"
 	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
+	
 	OPT_DELETE_SHORT="-d"
 	OPT_DELETE_HELP="Delete an issue from a group or a group completely"
 	
@@ -51,6 +54,10 @@ class Args:
 		cmd_group.add_argument(Args.GROUPNAME,
 							help=Args.GROUPNAME_HELP,
 							nargs=Args.GROUPNAME_NARGS)
+		
+		cmd_group.add_argument(Args.OPT_AUTO_COMMIT,
+							 action="store_true",
+							 help=Args.OPT_AUTO_COMMIT_HELP)
 		
 		cmd_group.add_argument(Args.OPT_DELETE_SHORT,
 							help=Args.OPT_DELETE_HELP)
@@ -140,3 +147,6 @@ def execute(args):
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
 	group_helper.addIssueToGroup(issueID, args.groupname)
 	commit_helper.addToIndex('"' + group_helper.getPathForGroup(args.groupname) + '"')
+	
+	if args.commit:
+		commit_helper.commit()

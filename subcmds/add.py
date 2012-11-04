@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from Issue import IssueProto, IssueFile
+from hookscripts import prepare_commit_msg
 from subprocess_helper import getCmd
 import commit_helper
 import config
@@ -39,13 +40,19 @@ class Args:
 	OPT_GROUP_SHORT="-g"
 	OPT_GROUP_HELP="Group name"
 	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
+	
 	@staticmethod
 	def addCmdToParser(parser):
 		cmd_add = parser.add_parser(NAME,
 								    help=HELP)
 		
-		cmd_add.add_argument(Args.OPT_GROUP_SHORT,
-							 Args.OPT_GROUP,
+		cmd_add.add_argument(Args.OPT_AUTO_COMMIT,
+							 action="store_true",
+							 help=Args.OPT_AUTO_COMMIT_HELP)
+		
+		cmd_add.add_argument(Args.OPT_GROUP,
 							 help=Args.OPT_GROUP_HELP)
 		
 		cmd_add.add_argument(Args.TITLE,
@@ -108,3 +115,6 @@ def execute(args):
 		
 		# Display the new issue ID to the user
 		print issueID
+		
+		if args.commit:
+			commit_helper.commit()

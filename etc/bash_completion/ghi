@@ -149,7 +149,7 @@ _ghi_add() {
 
 	case "$cur" in
 	--*)
-		__gitcomp "--description --group"
+		__gitcomp "--description --group --commit"
 		return
 		;;
 	*)
@@ -173,7 +173,7 @@ _ghi_edit() {
 
 	case "$cur" in
 	--*)
-		__gitcomp "--title --description --status"
+		__gitcomp "--title --description --status --commit"
 		return
 		;;
 	*)
@@ -198,7 +198,7 @@ _ghi_rm() {
 
 	case "$cur" in
 	--*)
-		__gitcomp "--force"
+		__gitcomp "--force --commit"
 		return
 		;;
 	*)
@@ -208,6 +208,13 @@ _ghi_rm() {
 }
 
 _ghi_group() {
+	case "$cur" in
+	--*)
+		__gitcomp "--commit"
+		return
+		;;
+	esac
+
 	case "$prev" in
 	group)
 		__gitcomp "$(__ghi_issues_short_and_groups)"

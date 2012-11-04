@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from Issue import IssueFile
+from hookscripts import prepare_commit_msg
 from subprocess_helper import getCmd
 import commit_helper
 import config
@@ -28,6 +29,9 @@ class Args:
 	"""Wrapper class that defines the command line args"""
 	ID="id"
 	ID_HELP="Issue ID"
+	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
 	
 	OPT_TITLE="--title"
 	OPT_TITLE_SHORT="-t"
@@ -48,6 +52,10 @@ class Args:
 		
 		cmd_edit.add_argument(Args.ID,
 							  help=Args.ID_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_AUTO_COMMIT,
+							  action="store_true",
+							  help=Args.OPT_AUTO_COMMIT_HELP)
 		
 		cmd_edit.add_argument(Args.OPT_STATUS_SHORT,
 							  Args.OPT_STATUS,
@@ -118,3 +126,6 @@ def execute(args):
 	issuepath = config.ISSUES_DIR + "/" + issueID
 	IssueFile.writeIssueToDisk(issuepath, issue)
 	commit_helper.addToIndex(issuepath)
+	
+	if args.commit:
+		commit_helper.commit()
