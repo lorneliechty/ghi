@@ -15,6 +15,10 @@ Latest thoughts on this topic after deep contemplation:
 			* ';'
 			* ... though maybe this can be handled via config with an appropriate default
 				* If we do handle via config, it will need to be a ghi config, not git because the chosen delimiter must be version controlled
+			* Eric Reifsnider has sggested a great solution to this problem: to use a similar field delimiter pattern as sed
+				* A group / subgroup structure is determined based on whether or not the name starts with a delimiter
+					* Example: .priority.high or .assignee.lorne
+				* Not sure if I would also want the group name to end in a delimiter as well
 
 		* It may be difficult to keep issues from being dual-listed under two subgroups of the same group
 			* Example: an issue filed under priority.high and priority.medium
