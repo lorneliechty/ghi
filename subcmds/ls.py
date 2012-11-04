@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueDisplayBuilder
+from Issue import IssueDisplayBuilder, Issue
 from group_helper import getIssueIdsInGroups
 from pager import PageOutputBeyondThisPoint
 from subprocess_helper import getCmd
 import config
 import dircache
+import group_helper
 import identifiers
 import sys
-import group_helper
+from identifiers import getFullIssueIdFromLeadingSubstr
 
 NAME = "ls"
 HELP = "List issues"
@@ -110,6 +111,24 @@ def _getAllIssueIDs():
 	return issueIDs
 			
 def _sortIssues(issueIDs, sortBy):
+	if sortBy != None and sortBy == 'id':
+		# We don't need to do anything here. Since the issues are stored with the id as the
+		# filename, then they will be automatically sorted.
+		return issueIDs
+	
+	if sortBy != None and sortBy == 'title':
+		issuesPathPrefix = config.ISSUES_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
+
+		issuesWithTitles = []
+		for issueID in issueIDs:
+			issuesWithTitles.extend([[Issue(issueID).getTitle(), getFullIssueIdFromLeadingSubstr(issueID)]])
+
+		# Sort by title
+		issuesWithTitles.sort(key=lambda issue: issue[0])
+		
+		# return sorted IDs
+		return map (lambda issueID: issueID[1], issuesWithTitles)
+	
 	if sortBy != None and sortBy == 'status':
 		issuesPathPrefix = config.ISSUES_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
 
