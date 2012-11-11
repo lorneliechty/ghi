@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueProto, IssueFile
-from hookscripts import prepare_commit_msg
+from issues import identifiers
+from issues.issue import IssueFile, IssueProto
 from subprocess_helper import getCmd
 import commit_helper
 import config
 import group_helper
-import identifiers
 import subprocess
 
 NAME="add"

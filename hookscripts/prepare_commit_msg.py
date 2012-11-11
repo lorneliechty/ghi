@@ -16,8 +16,8 @@
 
 try:
 	from subprocess_helper import getCmd
-	from Issue import IssueDisplayBuilder
-	from Issue import Issue
+	from issues import Issue
+	from issues.display import IssueDisplayBuilder
 	import config
 except:
 	print "Cannot find necessary modules / packages in $PYTHONPATH"

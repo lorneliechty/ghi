@@ -14,9 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import Issue
-from hookscripts import prepare_commit_msg
-from identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
+from issues.identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
+from issues.issue import Issue
 from subprocess_helper import getCmd
 import commit_helper
 import group_helper

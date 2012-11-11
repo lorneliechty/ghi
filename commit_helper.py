@@ -17,7 +17,6 @@
 from subprocess_helper import getCmd, runCmd
 import config
 import inspect
-import subprocess
 
 def _getCallerModuleName():
 	''''Get the name of the calling subcommand

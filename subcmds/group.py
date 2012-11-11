@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from issues import identifiers
 from subprocess_helper import getCmd
 import commit_helper
 import config
 import dircache
 import group_helper
-import identifiers
 
 NAME = "group"
 HELP = "group related issues"

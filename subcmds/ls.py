@@ -14,16 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueDisplayBuilder, Issue
 from group_helper import getIssueIdsInGroups
+from issues import identifiers
+from issues.display import IssueDisplayBuilder
+from issues.identifiers import getFullIssueIdFromLeadingSubstr
+from issues.issue import Issue
 from pager import PageOutputBeyondThisPoint
 from subprocess_helper import getCmd
 import config
 import dircache
 import group_helper
-import identifiers
 import sys
-from identifiers import getFullIssueIdFromLeadingSubstr
 
 NAME = "ls"
 HELP = "List issues"
