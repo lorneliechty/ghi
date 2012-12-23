@@ -24,11 +24,13 @@ class Column:
     def __init__(self, name, color=Color('none'), length=None):
         self.name = name
         self.color = color
-        self.length = length
+        self.length = (length if length != None else 100)
 
 COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'status' : Column('status', length=7),
-           'title'  : Column('title')}
+           'title'  : Column('title'),
+           'cdate'  : Column('cdate', length=20),
+           'mdate'  : Column('mdate', length=20)}
 
 class IssueDisplayBuilder:
     def __init__(self, issue):
@@ -69,15 +71,24 @@ class IssueDisplayBuilder:
         return line
     
     def getOneLineStr(self, columns):
-        clr_y = str(Color('yellow'))
-        clr_n = str(Color('none'))
-        
-        line = clr_y + self.getShortIdStr()
-        
-        stat = self.getStatusStr()
-        line += clr_n + '\t' + ((stat[:5] + '..') if len(stat) > 7 else stat)
-        line += clr_n + '\t' + self.getTitle()
-        
+        line = ""
+        for column in columns:
+            color = str(column.color)
+            field = "" 
+            if column.name == 'id':
+                field = self.getShortIdStr()
+            elif column.name == 'status':
+                field = self.getStatusStr()
+            elif column.name == 'title':
+                field = self.getTitle()
+            elif column.name == 'cdate':
+                field = self.getCreatedDateStr()
+            elif column.name == 'mdate':
+                field = self.getModifiedDateStr()
+            
+            fullField = color + ((field[:column.length-2] + '..') if len(field) > column.length else field)
+            line += fullField + (' ' * (column.length - len(fullField)) if len(fullField) < column.length else '') + '\t'
+                
         return line
     
     def getIdStr(self):

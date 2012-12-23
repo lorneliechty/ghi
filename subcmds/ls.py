@@ -71,6 +71,8 @@ def execute(args):
     else:
         columns = [display.COLUMNS['id'],
                    display.COLUMNS['status'],
+                   display.COLUMNS['cdate'],
+                   display.COLUMNS['mdate'],
                    display.COLUMNS['title']]
         
         # We may have a lot of issues in the list that would make the output
