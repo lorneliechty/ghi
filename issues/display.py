@@ -29,8 +29,8 @@ class Column:
 COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'status' : Column('status', length=7),
            'title'  : Column('title'),
-           'cdate'  : Column('cdate', Color('green'), length=20),
-           'mdate'  : Column('mdate', Color('green'), length=20),
+           'cdate'  : Column('cdate', Color('green'), length=19),
+           'mdate'  : Column('mdate', Color('green'), length=19),
            'groups' : Column('groups', Color('blue'), length=20)}
 
 class IssueDisplayBuilder:
@@ -131,12 +131,5 @@ class IssueDisplayBuilder:
             + "<" + self._issue.getModifiedAuthorEmail() + ">")
     
     def _formatDateFromTimestamp(self, timestamp):
-        import time
-        localtime = time.localtime(int(timestamp))
-        dateStr = str(localtime.tm_year)
-        dateStr += "-" + str(localtime.tm_mon)
-        dateStr += "-" + str(localtime.tm_mday)
-        dateStr += " " + str(localtime.tm_hour)
-        dateStr += ":" + str(localtime.tm_min)
-        dateStr += ":" + str(localtime.tm_sec)
-        return dateStr
+        import datetime
+        return datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
