@@ -55,7 +55,8 @@ class IssueDisplayBuilder:
                         + str(Color('none')) + "Author: " + self.getModifiedAuthorStr() + '\n'])
                 
         lines.extend([str(Color('none')) + "Status: " 
-                        + self.getStatusStr() + '\t\t\t'
+                        # The tab formatting here is horribly wrong, but works for now... need to fix it later :(
+                        + self.getStatusStr() + ('\t\t\t' if len(self.getStatusStr()) < 7 else '\t\t')
                         + str(Color('none')) + "Groups: "
                         + str(Color('blue')) + ', '.join(getGroupsForIssueId(self.getIdStr()))
                         + '\n'])
