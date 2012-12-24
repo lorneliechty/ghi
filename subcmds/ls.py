@@ -71,8 +71,6 @@ def execute(args):
     else:
         columns = [display.COLUMNS['id'],
                    display.COLUMNS['status'],
-                   display.COLUMNS['cdate'],
-                   display.COLUMNS['mdate'],
                    display.COLUMNS['groups'],
                    display.COLUMNS['title']]
         

@@ -31,7 +31,7 @@ COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'title'  : Column('title'),
            'cdate'  : Column('cdate', Color('green'), length=19),
            'mdate'  : Column('mdate', Color('green'), length=19),
-           'groups' : Column('groups', Color('blue'), length=20)}
+           'groups' : Column('groups', Color('blue'), length=10)}
 
 class IssueDisplayBuilder:
     def __init__(self, issue):
@@ -41,20 +41,24 @@ class IssueDisplayBuilder:
             self._issue = issue
     
     def getFullIssueDisplay(self):
+        from group_helper import getGroupsForIssueId
         lines = []
         lines.extend([str(Color('yellow')) + 
                     "Issue ID: " + self.getIdStr() + '\n'])
         
-        lines.extend([str(Color('none')) +
-                    "Created: " + self.getCreatedDateStr() + '\t' +
-                    "Author: " + self.getCreatedAuthorStr() + '\n'])
+        lines.extend([str(Color('none')) + "Created: "
+                        + str(Color('green')) + self.getCreatedDateStr() + '\t' 
+                        + str(Color('none')) + "Author: " + self.getCreatedAuthorStr() + '\n'])
                 
-        lines.extend([str(Color('none')) +
-                    "Modified: " + self.getModifiedDateStr() + '\t' +
-                    "Author: " + self.getModifiedAuthorStr() + '\n'])
+        lines.extend([str(Color('none')) + "Modified: " 
+                        + str(Color('green')) + self.getModifiedDateStr() + '\t' 
+                        + str(Color('none')) + "Author: " + self.getModifiedAuthorStr() + '\n'])
                 
-        lines.extend([str(Color('none')) +
-                    "Status: " + self.getStatusStr() + '\n'])
+        lines.extend([str(Color('none')) + "Status: " 
+                        + self.getStatusStr() + '\t\t\t'
+                        + str(Color('none')) + "Groups: "
+                        + str(Color('blue')) + ', '.join(getGroupsForIssueId(self.getIdStr()))
+                        + '\n'])
         
         lines.extend(['\n'])
         lines.extend([str(Color('none')) + 
