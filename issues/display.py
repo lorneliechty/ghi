@@ -29,8 +29,9 @@ class Column:
 COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'status' : Column('status', length=7),
            'title'  : Column('title'),
-           'cdate'  : Column('cdate', length=20),
-           'mdate'  : Column('mdate', length=20)}
+           'cdate'  : Column('cdate', Color('green'), length=20),
+           'mdate'  : Column('mdate', Color('green'), length=20),
+           'groups' : Column('groups', Color('blue'), length=20)}
 
 class IssueDisplayBuilder:
     def __init__(self, issue):
@@ -85,6 +86,9 @@ class IssueDisplayBuilder:
                 field = self.getCreatedDateStr()
             elif column.name == 'mdate':
                 field = self.getModifiedDateStr()
+            elif column.name == 'groups':
+                import group_helper
+                field = ', '.join(group_helper.getGroupsForIssueId(self.getIdStr()))
             
             fullField = color + ((field[:column.length-2] + '..') if len(field) > column.length else field)
             line += fullField + (' ' * (column.length - len(fullField)) if len(fullField) < column.length else '') + '\t'

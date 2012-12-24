@@ -73,6 +73,7 @@ def execute(args):
                    display.COLUMNS['status'],
                    display.COLUMNS['cdate'],
                    display.COLUMNS['mdate'],
+                   display.COLUMNS['groups'],
                    display.COLUMNS['title']]
         
         # We may have a lot of issues in the list that would make the output
