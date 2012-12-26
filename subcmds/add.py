@@ -51,7 +51,8 @@ class Args:
 							 action="store_true",
 							 help=Args.OPT_AUTO_COMMIT_HELP)
 		
-		cmd_add.add_argument(Args.OPT_GROUP,
+		cmd_add.add_argument(Args.OPT_GROUP_SHORT,
+                             Args.OPT_GROUP,
 							 help=Args.OPT_GROUP_HELP)
 		
 		cmd_add.add_argument(Args.TITLE,
