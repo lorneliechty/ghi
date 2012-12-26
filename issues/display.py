@@ -15,6 +15,7 @@
 from color import Color
 from issues.issue import Issue
 import config
+from console_display_utils import truncateOrPadStrToWidth
 
 class Column:
     name = None
@@ -28,7 +29,7 @@ class Column:
 
 COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'status' : Column('status', length=7),
-           'title'  : Column('title'),
+           'title'  : Column('title', length=50),
            'cdate'  : Column('cdate', Color('green'), length=19),
            'mdate'  : Column('mdate', Color('green'), length=19),
            'groups' : Column('groups', Color('blue'), length=10)}
@@ -95,8 +96,7 @@ class IssueDisplayBuilder:
                 import group_helper
                 field = ', '.join(group_helper.getGroupsForIssueId(self.getIdStr()))
             
-            fullField = color + ((field[:column.length-2] + '..') if len(field) > column.length else field)
-            line += fullField + (' ' * (column.length - len(fullField)) if len(fullField) < column.length else '') + '\t'
+            line += color + truncateOrPadStrToWidth(field, column.length) + '  '
                 
         return line
     

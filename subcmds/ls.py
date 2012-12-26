@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from color import Color
 from group_helper import getIssueIdsInGroups
 from issues import identifiers, display
 from issues.display import IssueDisplayBuilder
@@ -25,6 +26,7 @@ import config
 import dircache
 import group_helper
 import sys
+from console_display_utils import truncateOrPadStrToWidth
 
 NAME = "ls"
 HELP = "List issues"
@@ -72,11 +74,16 @@ def execute(args):
         columns = [display.COLUMNS['id'],
                    display.COLUMNS['status'],
                    display.COLUMNS['groups'],
-                   display.COLUMNS['title']]
+                   display.COLUMNS['title'],
+                   display.COLUMNS['mdate']]
         
         # We may have a lot of issues in the list that would make the output
         # run pretty long, therefore page it.
         PageOutputBeyondThisPoint()
+        
+        header = '  '.join([truncateOrPadStrToWidth(col.name, col.length) for col in columns])
+        print header
+        print '-' * len(header)        
 
         # Any sorting required?
         if args.sort != None:
