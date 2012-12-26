@@ -29,7 +29,7 @@ class Column:
 
 COLUMNS = {'id'     : Column('id', Color('yellow'), length=7),
            'status' : Column('status', length=7),
-           'title'  : Column('title', length=50),
+           'title'  : Column('title', length=80),
            'cdate'  : Column('cdate', Color('green'), length=19),
            'mdate'  : Column('mdate', Color('green'), length=19),
            'groups' : Column('groups', Color('blue'), length=10)}
