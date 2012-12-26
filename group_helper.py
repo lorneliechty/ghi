@@ -94,7 +94,8 @@ def canRmIssueFromGroup(issueID, groupname, force=False):
 	# the case and the group is already modified in the git
 	# index then we need a force to make this happen
 	else: # len(groupIDs) == 1
-		if getCmd('git status --porcelain -- ' + getPathForGroup(groupname))[0] != " ":
+		groupGitStatus = getCmd('git status --porcelain -- "' + getPathForGroup(groupname) + '"') 
+		if groupGitStatus and groupGitStatus[0] != " ":
 			return False
 	
 	return True
