@@ -1,6 +1,24 @@
 ISSUE-1
 0
 Groups of groups (a.k.a subgroups)
+--- New Idea ---
+* Use a scheme that defines subgroups by prefixed columns as defined below (e.g., prioirty.high, priority.low, etc)
+
+* Track these prefixes in the ghi config file (.ghi/config)
+	* The ghi config can now also serve as a good quick lookup for command extensions (and group tab completion?)
+	* This could also be a way to store a pre-defined list of subgroup values (like for priorities)
+
+* But!!!, how will the user add the prefix into the ghi config file?
+	* Maybe through a ghi-group command option? 
+		* git issue group add priority.high --prefix=priority. ... sounds awful
+		* git issue group sub "priority." high ... not too bad?
+	* Maybe through a new subgroup command?
+		* git issue subgroup add priority "priority." critical "very high" high medium low ... This is pretty good
+		* Not sure if I like having two commands that both modify the group concept though
+			* Is there precedent?
+				* git command extensions do this a lot and it's in-line with the plumbing vs. porcelain concept
+				* git-merge, git-pull, git-rebase, git-commit... all capable of making commits
+---
 Latest thoughts on this topic after deep contemplation:
 
 	* It seems like one of the most convenient ways to handle subgroups is via a delimiter in the group name
