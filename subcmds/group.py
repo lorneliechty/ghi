@@ -121,6 +121,7 @@ def execute(args):
 		
 		# see if we're deleting a group entirely
 		if group_helper.groupExists(args.d):
+			print "groupname = " + args.d
 			getCmd('git rm "' + group_helper.getPathForGroup(args.d) + '"')
 			return None
 		elif group_helper.groupExists(args.D):
