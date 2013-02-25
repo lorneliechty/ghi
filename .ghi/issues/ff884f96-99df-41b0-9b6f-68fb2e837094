@@ -1,6 +1,16 @@
 ISSUE-1
-0
+1
 Groups of groups (a.k.a subgroups)
+I think the "Better Idea" folder-based system is what we'll go with.
+
+--- Better Idea? ---
+* Use a folder-based system for organizing groups
+	* Similar to git's heads / refs / branches system that works with different remotes
+
+* What about if you have a group with the same name as a group folder / prefix...
+	* git handles this by throwing an error
+		* I'm OK with that... throwing errors is OK with me
+
 --- New Idea ---
 * Use a scheme that defines subgroups by prefixed columns as defined below (e.g., prioirty.high, priority.low, etc)
 
