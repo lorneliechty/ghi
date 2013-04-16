@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from groups.group import Group
 from issues import identifiers
 from issues.issue import IssueFile, IssueProto
 from subprocess_helper import getCmd
 import commit_helper
 import config
-import group_helper
 import subprocess
 
 NAME="add"
@@ -110,7 +110,7 @@ def execute(args):
 		commit_helper.addToIndex(issuepath)
 		
 		if args.group:
-			group_helper.addIssueToGroup(issueID, args.group)
+			Group(args.group).addIssue(issueID)
 			commit_helper.addToIndex(config.GROUPS_DIR + '/"' + args.group + '"')
 		
 		# Display the new issue ID to the user

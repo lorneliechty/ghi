@@ -94,7 +94,6 @@ class IssueDisplayBuilder:
             elif column.name == 'mdate':
                 field = self.getModifiedDateStr()
             elif column.name == 'groups':
-                import group_helper
                 field = ', '.join(getGroupsForIssueId(self.getIdStr()))
             
             line += color + truncateOrPadStrToWidth(field, column.length) + '  '
