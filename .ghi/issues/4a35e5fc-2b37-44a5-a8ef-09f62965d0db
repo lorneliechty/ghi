@@ -1,0 +1,4 @@
+ISSUE-1
+0
+Color chars display incorrectly when git issue <id> is piped into less
+
