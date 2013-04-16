@@ -16,35 +16,50 @@
 
 from subprocess_helper import getCmd
 import config
+import dircache
 import os.path
 
 def getIssueIdsInGroups():
-    return None
+    ret = {};
+    for group in dircache.listdir(config.GROUPS_DIR):
+        if not group == ".gitignore":
+            filepath = config.GROUPS_DIR + "/" + group
+            with open(filepath, 'rb') as f:
+                lines = f.readlines()
+                ret[group] = [line.rstrip() for line in lines]
+    
+    return ret
 
-def getGroupsForIssueId():
-    return None
+def getGroupsForIssueId(issueID):
+    groupPaths = getCmd("git grep --name-only " 
+                + issueID + " -- " + config.GROUPS_DIR)
 
-def rmIssueFromGroups():
-    return None
+    groups = []
+    pathPrefix = config.GROUPS_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
+    if groupPaths != None:
+        for path in groupPaths.splitlines():
+            groupname = path[len(pathPrefix) + 1:] # +1 to remove '/'
+            groups.extend([groupname]) 
+    
+    return groups
 
+def exists(group):
+    if group is None:
+        return False
+    
+    try:
+        # Assume the input is a Group
+        path = group.getPath()
+        
+    except:
+        # Assume that the input is a string
+        path = Group(group).getPath()
+        
+    return os.path.exists(path)
+    
 class Group:
     _path = None
     _name = None
-    
-    @staticmethod
-    def Exists(group):
-        if group is None:
-            return False
-        
-        try:
-            # Assume the input is a Group
-            path = group.getPath()
-            
-        except:
-            # Assume that the input is a string
-            path = Group(group).getPath()
-            
-        return os.path.exists(path)
     
     def __init__(self, name = None):
         if name:
@@ -84,6 +99,9 @@ class Group:
         return None
     
     def rmIssue(self, issueID, force = False):
+        if not self._canRmIssueFromGroup(issueID, force):
+            return False
+        
         groupIDs = self.getIssueIds()
         
         # If we're removing the last issue in a file, then rm the file
@@ -108,7 +126,7 @@ class Group:
         if force:
             return True
         
-        groupIDs = self.getPath()
+        groupIDs = self.getIssueIds()
         
         if groupIDs.count(issueID) == 0 or len(groupIDs) == 0:
             return False

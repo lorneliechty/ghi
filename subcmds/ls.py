@@ -15,7 +15,9 @@
 # limitations under the License.
 
 from color import Color
-from group_helper import getIssueIdsInGroups
+from console_display_utils import truncateOrPadStrToWidth
+from groups import group
+from groups.group import Group
 from issues import identifiers, display
 from issues.display import IssueDisplayBuilder
 from issues.identifiers import getFullIssueIdFromLeadingSubstr
@@ -24,9 +26,7 @@ from pager import PageOutputBeyondThisPoint
 from subprocess_helper import getCmd
 import config
 import dircache
-import group_helper
 import sys
-from console_display_utils import truncateOrPadStrToWidth
 
 NAME = "ls"
 HELP = "List issues"
@@ -106,8 +106,8 @@ def _getFilteredListofIssueIDs(args):
         issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
         if issueId == None:
             # See if this is a group ID
-            if group_helper.groupExists(args.id):
-                return group_helper.getIssueIdsInGroup(args.id)
+            if group.exists(args.id):
+                return Group(args.id).getIssueIds()
             else:
                 return None
             
@@ -168,7 +168,7 @@ def _displayUnGrouped(issueIDs, columns):
         print IssueDisplayBuilder(issueID).getOneLineStr(columns)
 
 def _displayGrouped(issueIDs, columns):
-    groups = getIssueIdsInGroups()
+    groups = group.getIssueIdsInGroups()
 
     grouped = {}
     ungrouped = []

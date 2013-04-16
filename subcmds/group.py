@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from groups import group
+from groups.group import Group
 from issues import identifiers
 from subprocess_helper import getCmd
 import commit_helper
 import config
 import dircache
-import group_helper
 
 NAME = "group"
 HELP = "group related issues"
@@ -70,6 +71,7 @@ class Args:
 def execute(args):
 	# Are we deleting something?
 	if args.d or args.D:
+		
 		# see if we're deleting an existing issue from a group
 		issueToDelete = args.d if args.d else args.D
 		issueID = identifiers.getFullIssueIdFromLeadingSubstr(issueToDelete)
@@ -81,24 +83,24 @@ def execute(args):
 			# due to the currently lame and hacky argparsing
 			if not args.id:
 				# Remove the issue from any groups that contained it
-				groups = group_helper.getGroupsForIssueId(issueID)
+				groupnames = group.getGroupsForIssueId(issueID)
 				
-				if len(groups) == 0:
+				if len(groupnames) == 0:
 					print "No groups to delete issue from!"
 					return None
 				
 				# If we're not forcing the remove, then we need to double-check
 				# to make sure that we can actually remove the issue from each
 				# group without breaking things
-				for group in groups:
-					if not group_helper.canRmIssueFromGroup(issueID,group,force):
+				for name in groupnames:
+					if not Group(name)._canRmIssue(issueID,force):
 						# Can't perform this operation without a force!
-						print "Cannot delete issue from group '" + group + "' without force option, '-D'"
+						print "Cannot delete issue from group '" + name + "' without force option, '-D'"
 						return None
 				
 				# All clear to remove the issue!... groups first if you please...
-				for group in groups: 
-					group_helper.rmIssueInGroup(issueID,group,force)
+				for name in groupnames: 
+					Group(name).rmIssue(issueID,force)
 					# HACK HACK HACK
 					# Should be executing a git command here to add the
 					# subsequent group changes to the index, but I'm taking
@@ -111,7 +113,7 @@ def execute(args):
 			# rather than using the groupname we have to pretend here
 			# that the id is the groupname... the command line just
 			# needs to be rewritten :(
-			group_helper.rmIssueInGroup(issueID, args.id, force)
+			Group(args.id).rmIssue(issueID, force)
 			
 			# HACK HACK HACK
 			# Should be executing a git command here to add the
@@ -120,12 +122,13 @@ def execute(args):
 			return None
 		
 		# see if we're deleting a group entirely
-		if group_helper.groupExists(args.d):
+		if group.exists(args.d):
 			print "groupname = " + args.d
-			getCmd('git rm "' + group_helper.getPathForGroup(args.d) + '"')
+			getCmd('git rm "' + Group(args.d).getPath() + '"')
 			return None
-		elif group_helper.groupExists(args.D):
-			getCmd('git rm -f "' + group_helper.getPathForGroup(args.D) + '"')
+		elif group.exists(args.D):
+			print "groupname = " + args.D
+			getCmd('git rm -f "' + Group(args.D).getPath() + '"')
 			return None
 		
 		# tried to delete, but we couldn't figure out what...
@@ -134,9 +137,9 @@ def execute(args):
 		return None
 	
 	if args.groupname == None and args.id == None:
-		for group in dircache.listdir(config.GROUPS_DIR):
-			if not group == ".gitignore":
-				print group
+		for groupname in dircache.listdir(config.GROUPS_DIR):
+			if not groupname == ".gitignore":
+				print groupname
 		return None
 	
 	if args.groupname == None:
@@ -146,8 +149,8 @@ def execute(args):
 	
 	# get the full issue ID & Add the issue to the group
 	issueID = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
-	group_helper.addIssueToGroup(issueID, args.groupname)
-	commit_helper.addToIndex('"' + group_helper.getPathForGroup(args.groupname) + '"')
+	Group(args.groupname).addIssue(issueID)
+	commit_helper.addToIndex('"' + Group(args.groupname).getPath() + '"')
 	
 	if args.commit:
 		commit_helper.commit()

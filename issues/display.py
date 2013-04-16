@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from color import Color
+from console_display_utils import truncateOrPadStrToWidth
 from issues.issue import Issue
 import config
-from console_display_utils import truncateOrPadStrToWidth
 
 class Column:
     name = None
@@ -42,7 +42,7 @@ class IssueDisplayBuilder:
             self._issue = issue
     
     def getFullIssueDisplay(self):
-        from group_helper import getGroupsForIssueId
+        from groups.group import getGroupsForIssueId
         lines = []
         lines.extend([str(Color('yellow')) + 
                     "Issue ID: " + self.getIdStr() + '\n'])
@@ -78,6 +78,7 @@ class IssueDisplayBuilder:
         return line
     
     def getOneLineStr(self, columns):
+        from groups.group import getGroupsForIssueId
         line = ""
         for column in columns:
             color = str(column.color)
@@ -94,7 +95,7 @@ class IssueDisplayBuilder:
                 field = self.getModifiedDateStr()
             elif column.name == 'groups':
                 import group_helper
-                field = ', '.join(group_helper.getGroupsForIssueId(self.getIdStr()))
+                field = ', '.join(getGroupsForIssueId(self.getIdStr()))
             
             line += color + truncateOrPadStrToWidth(field, column.length) + '  '
                 

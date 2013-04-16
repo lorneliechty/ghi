@@ -294,4 +294,9 @@ test_ls
 export GIT_PAGER=$GIT_PAGER_HOLDER
 
 echo "Leaving test directory"
+
+echo "------------------------------------"
+echo "- All test successfully completed! -"
+echo "------------------------------------"
+
 popd
