@@ -137,9 +137,7 @@ def execute(args):
 		return None
 	
 	if args.groupname == None and args.id == None:
-		for groupname in dircache.listdir(config.GROUPS_DIR):
-			if not groupname == ".gitignore":
-				print groupname
+		print "\n".join(group.getListOfAllGroups())
 		return None
 	
 	if args.groupname == None:

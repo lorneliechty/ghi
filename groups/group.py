@@ -16,17 +16,25 @@
 
 from subprocess_helper import getCmd
 import config
-import dircache
 import os.path
+
+def getListOfAllGroups():
+    ret = []
+    for paths, dirs, files in os.walk(config.GROUPS_DIR):
+        for f in files:
+            if not f == '.gitignore':
+                ret.extend(
+                   [os.path.join(paths,f).partition(config.GROUPS_DIR + os.sep)[2]]
+                   )
+    return ret
 
 def getIssueIdsInGroups():
     ret = {};
-    for group in dircache.listdir(config.GROUPS_DIR):
-        if not group == ".gitignore":
-            filepath = config.GROUPS_DIR + "/" + group
-            with open(filepath, 'rb') as f:
-                lines = f.readlines()
-                ret[group] = [line.rstrip() for line in lines]
+    for group in getListOfAllGroups():
+        filepath = config.GROUPS_DIR + os.sep + group
+        with open(filepath, 'rb') as f:
+            lines = f.readlines()
+            ret[group] = [line.rstrip() for line in lines]
     
     return ret
 
@@ -67,7 +75,7 @@ class Group:
     
     def getPath(self):
         if self._path is None and self.getName():
-            self._path = config.GROUPS_DIR + "/" + self.getName()
+            self._path = config.GROUPS_DIR + os.sep + self.getName()
             
         return self._path
 
@@ -81,22 +89,40 @@ class Group:
         return ret
     
     def addIssue(self, issueID):
+        if self.hasIssue(issueID):
+            # Keep group issue lists unique
+            return None
+
+        # Issue not already in group, so add it
+        # First see if this is a subgroup and contains some directory structure
+        if self.getPath().find(os.sep) > -1:
+            parentGroup = self.getPath().rpartition(os.sep)[0]
+            if not os.path.exists(parentGroup):
+                os.mkdir(parentGroup)
+
+        # Now actually add the issue to the group (creating if necessary)
         try:
-            with open(self.getPath(), "rb") as f:
+            with open(self.getPath(), "ab") as f:
+                f.write(issueID + "\n")
+                
+        except IOError:
+            if os.path.exists(self.getPath()):
+                # Kind of a hack... shouldn't be printing from here :(
+                print 'Cannot add issue to subgroup parent!'
+    
+    def hasIssue(self, issueID):
+        try:
+            with open(self.getPath(), 'rb') as f:
                 lines = f.read()
                 if lines.count(issueID):
                     # Issue already in group
-                    return None
+                    return True
+                
         except IOError:
-            # Group doesn't exist yet... carry on.
+            # Group doesn't exist yet...
             pass
-        
-        # Issue not already in group, so add it
-        with open(self.getPath(), "ab") as f:
-            f.write(issueID + "\n")
-    
-    def hasIssue(self):
-        return None
+
+        return False
     
     def rmIssue(self, issueID, force = False):
         if not self._canRmIssueFromGroup(issueID, force):

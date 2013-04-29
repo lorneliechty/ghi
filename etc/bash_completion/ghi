@@ -92,7 +92,7 @@ __ghi_groups() {
 	local groupsdir="$(__ghi_groups_dir "${1-}")"
 	
 	if [ -d "$groupsdir" ]; then
-		ls -1 ${groupsdir}
+		find ${groupsdir} -type f | cut -c $((${#groupsdir}+2))-
 	fi
 }
 
