@@ -1,0 +1,4 @@
+ISSUE-1
+2
+Add the ability to list only issues under a specific group
+Can use command syntax: `git issue <groupname>`

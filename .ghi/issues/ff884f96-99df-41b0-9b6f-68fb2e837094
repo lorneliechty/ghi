@@ -1,4 +1,64 @@
 ISSUE-1
-0
-Groups of groups
+2
+Groups of groups (a.k.a subgroups)
+I think the "Better Idea" folder-based system is what we'll go with.
 
+--- Better Idea? ---
+* Use a folder-based system for organizing groups
+	* Similar to git's heads / refs / branches system that works with different remotes
+
+* What about if you have a group with the same name as a group folder / prefix...
+	* git handles this by throwing an error
+		* I'm OK with that... throwing errors is OK with me
+
+--- New Idea ---
+* Use a scheme that defines subgroups by prefixed columns as defined below (e.g., prioirty.high, priority.low, etc)
+
+* Track these prefixes in the ghi config file (.ghi/config)
+	* The ghi config can now also serve as a good quick lookup for command extensions (and group tab completion?)
+	* This could also be a way to store a pre-defined list of subgroup values (like for priorities)
+
+* But!!!, how will the user add the prefix into the ghi config file?
+	* Maybe through a ghi-group command option? 
+		* git issue group add priority.high --prefix=priority. ... sounds awful
+		* git issue group sub "priority." high ... not too bad?
+	* Maybe through a new subgroup command?
+		* git issue subgroup add priority "priority." critical "very high" high medium low ... This is pretty good
+		* Not sure if I like having two commands that both modify the group concept though
+			* Is there precedent?
+				* git command extensions do this a lot and it's in-line with the plumbing vs. porcelain concept
+				* git-merge, git-pull, git-rebase, git-commit... all capable of making commits
+---
+Latest thoughts on this topic after deep contemplation:
+
+	* It seems like one of the most convenient ways to handle subgroups is via a delimiter in the group name
+		* Examples: 
+			* assignee.lorne
+			* priority.high
+	
+	* There are problems with this approach though:
+		* What delimiter to use may be based on personal preference:
+			* '.'
+			* ':'
+			* ';'
+			* ... though maybe this can be handled via config with an appropriate default
+				* If we do handle via config, it will need to be a ghi config, not git because the chosen delimiter must be version controlled
+			* Eric Reifsnider has sggested a great solution to this problem: to use a similar field delimiter pattern as sed
+				* A group / subgroup structure is determined based on whether or not the name starts with a delimiter
+					* Example: .priority.high or .assignee.lorne
+				* Not sure if I would also want the group name to end in a delimiter as well
+
+		* It may be difficult to keep issues from being dual-listed under two subgroups of the same group
+			* Example: an issue filed under priority.high and priority.medium
+			* We could maybe solve this via logic in ghi-group, but that won't be a good solution for git-merge
+				* Maybe for git-merge we add a pre-commit hookscript that will verify our groups for us
+					* This may cause problems for people that like to run in complex git environments wth lots of hookscripts
+	
+	* Implementing subgroups using this approach will keep the ghi file structure simple... which is nice
+
+	* "Default" subgrouping could be handled via extension commands that work with a standard subgrouping structure
+		* Examples:
+			* ghi-priority files issues under 'priority.*'
+			* ghi-assign files issues under 'assinee.*'
+	
+In general, I like this approach though... it seems like a clean way of doing this without overcomplicating either the problem or the solution.

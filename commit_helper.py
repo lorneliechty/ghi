@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from subprocess_helper import getCmd
+from subprocess_helper import getCmd, runCmd
 import config
 import inspect
 
@@ -45,17 +45,20 @@ def _restoreWc():
 def prepForCommit():
 	_stashWc()
 	
-def commit(msg):
-	cmdName = _getCallerModuleName()
-	getCmd('git commit -m "ghi-' + cmdName + ' ' + msg + '"')
-	
-	_restoreWc()
+def commit(msg = None):
+	if msg:
+		getCmd('git commit -m "' + msg + '"')
+	else:
+		runCmd('git commit')
 	
 def addToIndex(path):
 	getCmd("git add " + path)
 
-def remove(path):
-	getCmd("git rm " + path)
+def remove(path, force=False):
+	if force:
+		getCmd("git rm -f " + path)
+	else:
+		getCmd("git rm " + path)
 
 def cleanWcAndCommitGhiDir(msg):
 	'''Cleans the git working copy and creates a git commit for the

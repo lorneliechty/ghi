@@ -26,6 +26,15 @@ class Args:
 	"""Wrapper class that defines the command line args"""
 	OPT_GHI_PATH="--ghi_path"
 	OPT_GHI_PATH_HELP="Path to ghi install"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_init = parser.add_parser(NAME, help=HELP)
+		
+		cmd_init.add_argument(Args.OPT_GHI_PATH,
+							  help=Args.OPT_GHI_PATH_HELP)
+		
+		cmd_init.set_defaults(func=execute)
 
 def execute(args):
 	bFileAdd = False

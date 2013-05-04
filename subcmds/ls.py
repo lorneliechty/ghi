@@ -14,118 +14,189 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueDisplayBuilder
-from group_helper import getIssueIdsInGroups
+from color import Color
+from console_display_utils import truncateOrPadStrToWidth
+from groups import group
+from groups.group import Group
+from issues import identifiers, display
+from issues.display import IssueDisplayBuilder
+from issues.identifiers import getFullIssueIdFromLeadingSubstr
+from issues.issue import Issue
 from pager import PageOutputBeyondThisPoint
 from subprocess_helper import getCmd
 import config
 import dircache
-import identifiers
 import sys
 
 NAME = "ls"
 HELP = "List issues"
 
 class Args:
-	"""Wrapper class that defines the command line args"""
-	ID="id"
-	ID_HELP="Issue ID"
-	ID_NARGS="?"
-	
-	OPT_GROUPED="--group"
-	OPT_GROUPED_HELP="List issues by group"
-	OPT_GROUPED_ACTION="store_true"
-	
-	OPT_SORT="--sort"
-	OPT_SORT_HELP="Sort issues"
+    """Wrapper class that defines the command line args"""
+    ID="id"
+    ID_HELP="Issue ID"
+    ID_NARGS="?"
+    
+    OPT_GROUPED="--group"
+    OPT_GROUPED_HELP="List issues by group"
+    OPT_GROUPED_ACTION="store_true"
+    
+    OPT_SORT="--sort"
+    OPT_SORT_HELP="Sort issues"
+    
+    @staticmethod
+    def addCmdToParser(parser):
+        cmd_ls = parser.add_parser(NAME, help=HELP)
+        
+        cmd_ls.add_argument(Args.ID,
+                            help=Args.ID_HELP,
+                            nargs=Args.ID_NARGS)
+        
+        cmd_ls.add_argument(Args.OPT_GROUPED,
+                            action=Args.OPT_GROUPED_ACTION,
+                            help=Args.OPT_GROUPED_HELP)
+        
+        cmd_ls.add_argument(Args.OPT_SORT,
+                            help=Args.OPT_SORT)
+        
+        cmd_ls.set_defaults(func=execute)
 
 def execute(args):
-	if args.id:
-		issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
-		if issueId == None:
-			print "Could not find issue: " + args.id
-			return None
+    issueIDs = _getFilteredListofIssueIDs(args)
+    if issueIDs == None:
+        print "Could not find issue: " + args.id
+        return
+    
+    elif len(issueIDs) == 1:
+        print IssueDisplayBuilder(issueIDs[0]).getFullIssueDisplay()
+            
+    else:
+        columns = [display.COLUMNS['id'],
+                   display.COLUMNS['status'],
+                   display.COLUMNS['groups'],
+                   display.COLUMNS['title'],
+                   display.COLUMNS['mdate']]
+        
+        # We may have a lot of issues in the list that would make the output
+        # run pretty long, therefore page it.
+        PageOutputBeyondThisPoint()
+        
+        header = '  '.join([truncateOrPadStrToWidth(col.name, col.length) for col in columns])
+        print header
+        print '-' * len(header)        
 
-		print IssueDisplayBuilder(issueId).getFullIssueDisplay()
+        # Any sorting required?
+        if args.sort != None:
+            issueIDs = _sortIssues(issueIDs, args.sort)
+            
+        # Check to see if a default issue sort has been configured for this repository
+        else:
+            sort = getCmd('git config issue.ls.sort')
+            if sort != None:
+                issueIDs = _sortIssues(issueIDs, sort)
 
-	else:
-		issueIDs = _getAllIssueIDs()
-		if len(issueIDs) == 0:
-			return
+        # Group arg can be passed as parameter or via configured default
+        if args.group or getCmd('git config issue.ls.group') == 'true':
+            _displayGrouped(issueIDs, columns)        
+        else:
+            _displayUnGrouped(issueIDs, columns)
 
-		# We may have a lot of issues in the list that would make the output
-		# run pretty long, therefore page it.
-		PageOutputBeyondThisPoint()
+def _getFilteredListofIssueIDs(args):
+    if args.id:
+        issueId = identifiers.getFullIssueIdFromLeadingSubstr(args.id)
+        if issueId == None:
+            # See if this is a group ID
+            if group.exists(args.id):
+                return Group(args.id).getIssueIds()
+            else:
+                return None
+            
+        return [issueId]
+    
+    else:
+        return _getAllIssueIDs()
 
-		# Any sorting required?
-		if args.sort != None:
-			issueIDs = _sortIssues(issueIDs, args.sort)
-			
-		# Check to see if a default issue sort has been configured for this repository
-		else:
-			sort = getCmd('git config issue.ls.status')
-			if sort != None:
-				issueIDs = _sortIssues(issueIDs, sort)
-
-		# Group arg can be passed as parameter or via configured default
-		if args.group or getCmd('git config issue.ls.group') == 'true':
-			_displayGrouped(issueIDs)		
-		else:
-			_displayUnGrouped(issueIDs)
-			
 def _getAllIssueIDs():
-	issueIDs = dircache.listdir(config.ISSUES_DIR)
-	try:
-		issueIDs.remove('.gitignore')
-	except:	pass
-	return issueIDs
-			
+    issueIDs = dircache.listdir(config.ISSUES_DIR)
+    try:
+        issueIDs.remove('.gitignore')
+    except:    pass
+    return issueIDs
+            
 def _sortIssues(issueIDs, sortBy):
-	if sortBy != None and sortBy == 'status':
-		issuesPathPrefix = config.ISSUES_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
+    if sortBy == None:
+        return None
+    
+    if sortBy == 'id':
+        # We don't need to do anything here. Since the issues are stored with the id as the
+        # filename, then they will be automatically sorted.
+        return issueIDs
+    
+    issuesPathPrefix = config.ISSUES_DIR[len(config.GIT_ROOT) + 1:] # +1 to remove '/'
+    issueSortTuple =[]
+    
+    if sortBy == 'title':
+        for issueID in issueIDs:
+            issueSortTuple.extend([[Issue(issueID).getTitle(), getFullIssueIdFromLeadingSubstr(issueID)]])
+    
+    elif sortBy == 'status':
+        # Organize the issues into status groups
+        for sk in config.STATUS_OPTS:
+            issues = getCmd('git grep -n ^' + str(sk) + '$ -- ' + config.ISSUES_DIR)
+            if issues != None:
+                for i in issues.splitlines():
+                    issueSortTuple.extend([[sk, i.split(':')[0][len(issuesPathPrefix) + 1:]]]) # +1 to remove '/'
+    
+    elif sortBy == 'date' or sortBy == 'cdate':
+        for issueID in issueIDs:
+            issueSortTuple.extend([[Issue(issueID).getCreatedDate(), getFullIssueIdFromLeadingSubstr(issueID)]])
+            
+    elif sortBy == 'mdate':
+        for issueID in issueIDs:
+            issueSortTuple.extend([[Issue(issueID).getModifiedDate(), getFullIssueIdFromLeadingSubstr(issueID)]])
+            
+    # Sort by Date
+    issueSortTuple.sort(key=lambda issue: issue[0])
+    
+    if len(issueSortTuple) > 0:
+        return map (lambda issueID: issueID[1], issueSortTuple)
+    
+    return None
+        
+def _displayUnGrouped(issueIDs, columns):
+    for issueID in issueIDs:    
+        print IssueDisplayBuilder(issueID).getOneLineStr(columns)
 
-		# Organize the issues into status groups
-		issuesWithStatus = []
-		for sk in config.STATUS_OPTS:
-			issues = getCmd('git grep -n ^' + str(sk) + '$ -- ' + config.ISSUES_DIR)
-			if issues != None:
-				for i in issues.splitlines():
-					issuesWithStatus.extend([[sk, i.split(':')[0][len(issuesPathPrefix) + 1:]]]) # +1 to remove '/'
+def _displayGrouped(issueIDs, columns):
+    groups = group.getIssueIdsInGroups()
 
-		# Sort by status
-		issuesWithStatus.sort(key=lambda issue: issue[0])
-		
-		# return sorted IDs
-		return map (lambda issueID: issueID[1], issuesWithStatus)
-	
-	return None
-		
-def _displayUnGrouped(issueIDs):
-	for issueID in issueIDs:	
-		print IssueDisplayBuilder(issueID).getOneLineStr()
+    grouped = {}
+    ungrouped = []
+    for issueID in issueIDs:
+        isUngrouped = True
+        for g in groups:
+            if groups[g].count(issueID):
+                isUngrouped = False
+                if not grouped.has_key(g):
+                    grouped[g] = []
+                grouped[g].extend([issueID])
+        if isUngrouped:
+            ungrouped.extend([issueID])
 
-def _displayGrouped(issueIDs):
-	groups = getIssueIdsInGroups()
+    first = True
+    for g in grouped:
+        if first:    first = False
+        else:        print ""
 
-	ungrouped = []
-	for issueID in issueIDs:
-		isUngrouped = True
-		for g in groups:
-			if groups[g].count(issueID):
-				isUngrouped = False
-				break
-		if isUngrouped:
-			ungrouped.extend([issueID])
-
-	for g in groups:
-		print g
-		for issueID in groups[g]:
-			sys.stdout.write(IssueDisplayBuilder(issueID).getOneLineStr() + '\n')
-		print ""
-	
-	print "ungrouped"
-	for issueID in ungrouped: 
-		print IssueDisplayBuilder(issueID).getOneLineStr()
+        print g
+        for issueID in grouped[g]:
+            sys.stdout.write(IssueDisplayBuilder(issueID).getOneLineStr(columns) + '\n')
+    
+    if len(ungrouped) > 0:
+        if len(grouped) > 0: print ""
+        print "ungrouped"
+        for issueID in ungrouped: 
+            print IssueDisplayBuilder(issueID).getOneLineStr(columns)
 
 if (__name__ == "__main__"):
-	execute()
+    execute()

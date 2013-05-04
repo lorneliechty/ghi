@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueProto, IssueFile
+from groups.group import Group
+from issues import identifiers
+from issues.issue import IssueFile, IssueProto
 from subprocess_helper import getCmd
 import commit_helper
 import config
-import group_helper
-import identifiers
 import subprocess
 
 NAME="add"
@@ -38,6 +38,32 @@ class Args:
 	OPT_GROUP="--group"
 	OPT_GROUP_SHORT="-g"
 	OPT_GROUP_HELP="Group name"
+	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_add = parser.add_parser(NAME,
+								    help=HELP)
+		
+		cmd_add.add_argument(Args.OPT_AUTO_COMMIT,
+							 action="store_true",
+							 help=Args.OPT_AUTO_COMMIT_HELP)
+		
+		cmd_add.add_argument(Args.OPT_GROUP_SHORT,
+                             Args.OPT_GROUP,
+							 help=Args.OPT_GROUP_HELP)
+		
+		cmd_add.add_argument(Args.TITLE,
+							 nargs=Args.TITLE_NARGS,
+							 help=Args.TITLE_HELP)
+		
+		cmd_add.add_argument(Args.OPT_DESCRIPTION_SHORT,
+							 Args.OPT_DESCRIPTION,
+							 help=Args.OPT_DESCRIPTION_HELP)
+
+		cmd_add.set_defaults(func=execute)
 
 def execute(args):
 	issue = None
@@ -84,8 +110,11 @@ def execute(args):
 		commit_helper.addToIndex(issuepath)
 		
 		if args.group:
-			group_helper.addIssueToGroup(issueID, args.group)
+			Group(args.group).addIssue(issueID)
 			commit_helper.addToIndex(config.GROUPS_DIR + '/"' + args.group + '"')
 		
 		# Display the new issue ID to the user
 		print issueID
+		
+		if args.commit:
+			commit_helper.commit()

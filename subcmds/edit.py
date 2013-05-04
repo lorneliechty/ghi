@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Issue import IssueFile
+from issues import identifiers
+from issues.issue import IssueFile
 from subprocess_helper import getCmd
 import commit_helper
 import config
-import identifiers
 import subprocess
 
 NAME="edit"
@@ -28,6 +28,9 @@ class Args:
 	"""Wrapper class that defines the command line args"""
 	ID="id"
 	ID_HELP="Issue ID"
+	
+	OPT_AUTO_COMMIT="--commit"
+	OPT_AUTO_COMMIT_HELP="Auto-commit"
 	
 	OPT_TITLE="--title"
 	OPT_TITLE_SHORT="-t"
@@ -40,6 +43,32 @@ class Args:
 	OPT_STATUS="--status"
 	OPT_STATUS_SHORT="-s"
 	OPT_STATUS_HELP="Status"
+	
+	@staticmethod
+	def addCmdToParser(parser):
+		cmd_edit = parser.add_parser(NAME,
+								   help=HELP)
+		
+		cmd_edit.add_argument(Args.ID,
+							  help=Args.ID_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_AUTO_COMMIT,
+							  action="store_true",
+							  help=Args.OPT_AUTO_COMMIT_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_STATUS_SHORT,
+							  Args.OPT_STATUS,
+							  help=Args.OPT_STATUS_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_TITLE_SHORT,
+							  Args.OPT_TITLE,
+							  help=Args.OPT_TITLE_HELP)
+		
+		cmd_edit.add_argument(Args.OPT_DESCRIPTION_SHORT,
+							  Args.OPT_DESCRIPTION,
+							  help=Args.OPT_DESCRIPTION_HELP)
+		
+		cmd_edit.set_defaults(func=execute)
 
 def execute(args):
 	
@@ -96,3 +125,6 @@ def execute(args):
 	issuepath = config.ISSUES_DIR + "/" + issueID
 	IssueFile.writeIssueToDisk(issuepath, issue)
 	commit_helper.addToIndex(issuepath)
+	
+	if args.commit:
+		commit_helper.commit()

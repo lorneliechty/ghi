@@ -92,7 +92,7 @@ __ghi_groups() {
 	local groupsdir="$(__ghi_groups_dir "${1-}")"
 	
 	if [ -d "$groupsdir" ]; then
-		ls -1 ${groupsdir}
+		find ${groupsdir} -type f | cut -c $((${#groupsdir}+2))-
 	fi
 }
 
@@ -105,6 +105,16 @@ __ghi_is_str_groupname() {
 	done
 
 	echo 0;
+}
+
+__ghi_is_str_leading_substr_of_group() {
+	for id in $(__ghi_groups); do
+		if [[ "$id" =~ $1*  ]]; then
+			echo 1; return 0
+		fi
+	done
+
+	echo 0; return 1
 }
 
 __ghi_issues_short_and_groups() {
@@ -139,7 +149,7 @@ _ghi_add() {
 
 	case "$cur" in
 	--*)
-		__gitcomp "--description --group"
+		__gitcomp "--description --group --commit"
 		return
 		;;
 	*)
@@ -163,7 +173,7 @@ _ghi_edit() {
 
 	case "$cur" in
 	--*)
-		__gitcomp "--title --description --status"
+		__gitcomp "--title --description --status --commit"
 		return
 		;;
 	*)
@@ -184,10 +194,27 @@ _ghi_edit() {
 }
 
 _ghi_rm() {
-	__gitcomp "$(__ghi_issues_short)"
+	__git_has_doubledash && return
+
+	case "$cur" in
+	--*)
+		__gitcomp "--force --commit"
+		return
+		;;
+	*)
+		__gitcomp "$(__ghi_issues_short)"
+	;;
+	esac
 }
 
 _ghi_group() {
+	case "$cur" in
+	--*)
+		__gitcomp "--commit"
+		return
+		;;
+	esac
+
 	case "$prev" in
 	group)
 		__gitcomp "$(__ghi_issues_short_and_groups)"
@@ -224,15 +251,16 @@ _git_issue() {
 		*)
 			# If no subcommand found... see if our current word is the start of a subcommand
 			for cmd in $subcommands; do
-				if [[ "$cmd" =~ $cur* ]]; then
+				if [[ "$cmd" =~ $cur ]]; then
 					__gitcomp "$subcommands"
 					return
 				fi
 			done
 
-			# If no subcommand found... see if our current word is the start of an issue id
-			if [ $(__ghi_is_str_leading_substr_of_issue_id "$cur") = 1 ]; then
-				__gitcomp "$(__ghi_issues_short)"
+			# If no subcommand found... see if our current word is the start of an issue id or group
+			if [ $(__ghi_is_str_leading_substr_of_issue_id "$cur") = 1 \
+				 -o $(__ghi_is_str_leading_substr_of_group "$cur") = 1 ]; then
+				__gitcomp "$(__ghi_issues_short_and_groups)"
 				return
 			fi
 

@@ -68,19 +68,19 @@ function test_add() {
 
 	$GHI_CMD_ALIAS \
 		add "Add with --group" \
-		--group "Added with --group"
+		--group "add/Added with --group"
 	git commit -m "Test ghi-add with --description"
 
 	$GHI_CMD_ALIAS \
 		add "Add with -d and --group" \
 		-d "Description of Issue" \
-		--group "ghi-add with --group"
+		--group "add/ghi-add with --group"
 	git commit -m "Test ghi-add with -d and --group"
 
 	$GHI_CMD_ALIAS \
 		add "Add with --description and --group" \
 		--description "Description of Issue" \
-		--group "ghi-add with --group"
+		--group "add/ghi-add with --group"
 	git commit -m "Test ghi-add with --description and --group"
 }
 
@@ -199,23 +199,30 @@ function test_group() {
 
 	issue_to_group=$($GHI_CMD_ALIAS add "Issue to group")
 	git commit -m "Add Issue for testing ghi-group"
-	$GHI_CMD_ALIAS group $issue_to_group "ghi-group test group"
+	$GHI_CMD_ALIAS group $issue_to_group "group/ghi-group test group"
 	git commit -m "Group Issue for testing ghi-group"
 
-	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" --group "ghi-group test group")
+	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" --group "group/ghi-group test group")
 	git commit -m "Add Issue for testing ghi-group"
-	$GHI_CMD_ALIAS group -d $issue_to_rm_from_group "ghi-group test group"
+	$GHI_CMD_ALIAS group -d $issue_to_rm_from_group "group/ghi-group test group"
 	git commit -m "Remove issue from existing group for testing ghi-group"
 
-	$GHI_CMD_ALIAS group -d "ghi-group test group"
+	$GHI_CMD_ALIAS group -d "group/ghi-group test group"
 	git commit -m "Remove group for testing ghi-group"
 
-	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" --group "ghi-group test group")
-	issue_to_rm_from_group_2=$($GHI_CMD_ALIAS add "Issue to group" --group "ghi-group test group")
+	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" --group "group/ghi-group test group")
+	issue_to_rm_from_group_2=$($GHI_CMD_ALIAS add "Issue to group" --group "group/ghi-group test group")
 	git commit -m "Add Issues for testing ghi-group"
 	$GHI_CMD_ALIAS rm $issue_to_rm_from_group
-	$GHI_CMD_ALIAS rm $issue_to_rm_from_group_2	# Should also remove the group
+	$GHI_CMD_ALIAS rm -f $issue_to_rm_from_group_2	# Have to force removal of this issue since the previous group change was uncommmitted
 	git commit -m "Testing multi-issue remove to remove group"
+
+	issue_to_rm_from_group=$($GHI_CMD_ALIAS add "Issue to group" -g "group/test group")
+	$GHI_CMD_ALIAS group -d "group/test group"		# Should not remove group (because it is not yet committed)
+	$GHI_CMD_ALIAS group -D "group/test group"		# Should remove group
+	$GHI_CMD_ALIAS group $issue_to_rm_from_group "group/test group"	# put the issue back in the group
+	$GHI_CMD_ALIAS rm $issue_to_rm_from_group	# Should not remove issue or group (because they are not yet committed)
+	$GHI_CMD_ALIAS rm --force $issue_to_group	# Shoudl remove both issue and group
 
 	$GHI_CMD_ALIAS --group
 }
@@ -238,6 +245,10 @@ function test_rm() {
 	
 	$GHI_CMD_ALIAS rm $issue_to_rm
 	git commit -m "Issue added with --group removed with ghi-rm"
+
+	issue_to_rm=$($GHI_CMD_ALIAS add "Issue to rm")
+	$GHI_CMD_ALIAS rm $issue_to_rm			# Should not remove issue
+	$GHI_CMD_ALIAS rm --force $issue_to_rm	# Should remove issue
 }
 
 set -e	# Exit immediately if there is an error... don't keep going
@@ -283,4 +294,9 @@ test_ls
 export GIT_PAGER=$GIT_PAGER_HOLDER
 
 echo "Leaving test directory"
+
+echo "------------------------------------"
+echo "- All test successfully completed! -"
+echo "------------------------------------"
+
 popd

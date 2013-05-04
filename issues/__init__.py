@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 #
 # Copyright (C) 2012 Lorne Liechty
 #
@@ -13,26 +12,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import os
-import subprocess
-
-def getCmd(cmd):
-	ret = subprocess.Popen(
-		cmd,
-		shell=True,
-		stdin=subprocess.PIPE,
-		stdout=subprocess.PIPE,
-		stderr=subprocess.STDOUT,
-		close_fds=True).stdout.read().strip()
-		
-	# Check for null result
-	if ret != '':
-		return ret
-	
-	return None
-
-def runCmd(cmd):
-	os.system(cmd)
-
-	return None
