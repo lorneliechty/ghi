@@ -16,7 +16,7 @@
 
 try:
 	from subprocess_helper import getCmd
-	from issues.Issue import Issue
+	from issues.issue import Issue
 	from issues.display import IssueDisplayBuilder
 	import config
 except:
