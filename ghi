@@ -18,25 +18,36 @@ import argparse
 import config
 import subcmds
 import sys
+import os.path
 
-GHI_VERSION = "0.3.0"
+GHI_VERSION = "0.4.0"
 def printVersion():
-	print "ghi version " + GHI_VERSION
-	
+    print "ghi version " + GHI_VERSION
+    
 # First, check to see if we are even in a git repository...
 if str(config.GIT_ROOT).count("fatal: Not a git repository"):
-	print "Not a git repository! ghi commands must be run within a git!"
-	quit()
+    print "Not a git repository! ghi commands must be run within a git!"
+    quit()
+
+# Now check to see if we've got ghi installed in this repository...
+if os.path.isdir(config.GHI_DIR) == False or \
+    os.path.isdir(config.ISSUES_DIR) == False or \
+    os.path.isdir(config.GROUPS_DIR) == False:
+    print "ghi not yet initialized in this repository. Please run ghi-init."
+    quit()
+
+if os.path.isdir(config.GROUPS_DIR) == False:
+	os.makedirs(config.GROUPS_DIR)
 
 # Create top-level argument parser
 parser = argparse.ArgumentParser()
 
 # Give people a way to get the version of ghi that they are working with
 parser.add_argument("--version", action="store_true",
-					help="Display the version of the ghi install")
+                    help="Display the version of the ghi install")
 
 cmds = parser.add_subparsers(title="subcommands",
-							 help="valid subcommands")
+                             help="valid subcommands")
 
 # Create the various subcmd parsers
 subcmds.init  .Args.addCmdToParser(cmds)
@@ -49,36 +60,36 @@ subcmds.group .Args.addCmdToParser(cmds)
 # Quick sanity check to see if any subcommand was given at all
 posarg = False
 cmd_names = [
-	subcmds.add.NAME,
-	subcmds.edit.NAME,
-	subcmds.group.NAME,
-	subcmds.init.NAME,
-	subcmds.ls.NAME,
-	subcmds.rm.NAME
-	]
+    subcmds.add.NAME,
+    subcmds.edit.NAME,
+    subcmds.group.NAME,
+    subcmds.init.NAME,
+    subcmds.ls.NAME,
+    subcmds.rm.NAME
+    ]
 for i, arg in enumerate(sys.argv):
-	if (i != 0 and str(arg)[0] != '-'):
-		if cmd_names.count(arg) > 0:
-			posarg = True
-			break
+    if (i != 0 and str(arg)[0] != '-'):
+        if cmd_names.count(arg) > 0:
+            posarg = True
+            break
 
 optarg = False
 if len(sys.argv) > 1:
-	if not (sys.argv.count("-h") or sys.argv.count("--help") or 
-			sys.argv.count("--version")):
-		optarg = True
+    if not (sys.argv.count("-h") or sys.argv.count("--help") or 
+            sys.argv.count("--version")):
+        optarg = True
 
 # Make the default subcommand 'ls'
 if (posarg == False):
-	if optarg:
-		args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
-	else:
-		args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
+    if optarg:
+        args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
+    else:
+        args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
-	args = parser.parse_args()
+    args = parser.parse_args()
 
 if (args.version):
-	printVersion()
+    printVersion()
 else:
-	# Execute the command
-	args.func(args)
+    # Execute the command
+    args.func(args)
