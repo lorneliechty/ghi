@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from utils.color import Color
-from console_display_utils import truncateOrPadStrToWidth
+from utils.console_display_utils import truncateOrPadStrToWidth
 from issues.issue import Issue
 import config
 

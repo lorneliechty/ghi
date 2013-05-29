@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from utils.color import Color
-from console_display_utils import truncateOrPadStrToWidth
+from utils.console_display_utils import truncateOrPadStrToWidth
 from groups import group
 from groups.group import Group
 from issues import identifiers, display
