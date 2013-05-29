@@ -19,6 +19,8 @@ import config
 import subcmds
 import sys
 import os.path
+import subprocess_helper
+import utils 
 
 GHI_VERSION = "0.4.0"
 def printVersion():
@@ -30,14 +32,12 @@ if str(config.GIT_ROOT).count("fatal: Not a git repository"):
     quit()
 
 # Now check to see if we've got ghi installed in this repository...
-if os.path.isdir(config.GHI_DIR) == False or \
-    os.path.isdir(config.ISSUES_DIR) == False or \
-    os.path.isdir(config.GROUPS_DIR) == False:
+if not sys.argv.count(subcmds.init.NAME) and (
+    os.path.isdir(config.GHI_DIR) == False or 
+    os.path.isdir(config.ISSUES_DIR) == False or 
+    os.path.isdir(config.GROUPS_DIR) == False):
     print "ghi not yet initialized in this repository. Please run ghi-init."
     quit()
-
-if os.path.isdir(config.GROUPS_DIR) == False:
-	os.makedirs(config.GROUPS_DIR)
 
 # Create top-level argument parser
 parser = argparse.ArgumentParser()
@@ -58,7 +58,7 @@ subcmds.rm    .Args.addCmdToParser(cmds)
 subcmds.group .Args.addCmdToParser(cmds)
 
 # Quick sanity check to see if any subcommand was given at all
-posarg = False
+knownCmd = False
 cmd_names = [
     subcmds.add.NAME,
     subcmds.edit.NAME,
@@ -70,7 +70,7 @@ cmd_names = [
 for i, arg in enumerate(sys.argv):
     if (i != 0 and str(arg)[0] != '-'):
         if cmd_names.count(arg) > 0:
-            posarg = True
+            knownCmd = True
             break
 
 optarg = False
@@ -80,16 +80,31 @@ if len(sys.argv) > 1:
         optarg = True
 
 # Make the default subcommand 'ls'
-if (posarg == False):
-    if optarg:
-        args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
-    else:
-        args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
+xcmd = None
+if (knownCmd == False):
+    # If our passed-in arguments didn't contain a known command, then
+    # there may have been a valid extension command
+    if sys.argv[0].count("ghi"):
+        xcmd = "ghi-" + sys.argv[1]
+        if which(xcmd) == None:
+            if optarg:
+                args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
+            else:
+                args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
     args = parser.parse_args()
 
-if (args.version):
+if xcmd:
+    # Execute the extension command
+    cmdStatus = os.system(xcmd + ' ' + ' '.join(sys.argv[2:]))
+    if cmdStatus == 0:
+        # Looks like the command executed successfully...
+        quit()
+
+elif (args.version):
+    # Just display the version info
     printVersion()
+
 else:
     # Execute the command
     args.func(args)
