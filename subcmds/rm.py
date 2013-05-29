@@ -19,7 +19,7 @@ from groups.group import Group
 from issues.identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
 from issues.issue import Issue
 from utils.subprocess_helper import getCmd
-import commit_helper
+from utils import commit_helper
 
 NAME = "rm"
 HELP = "Remove an issue"

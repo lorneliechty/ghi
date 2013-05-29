@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from utils.subprocess_helper import getCmd
-import commit_helper
+from utils import commit_helper
 import config
 import os
 

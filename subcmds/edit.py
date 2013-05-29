@@ -17,7 +17,7 @@
 from issues import identifiers
 from issues.issue import IssueFile
 from utils.subprocess_helper import getCmd
-import commit_helper
+from utils import commit_helper
 import config
 import subprocess
 
