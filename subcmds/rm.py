@@ -18,7 +18,7 @@ from groups import group
 from groups.group import Group
 from issues.identifiers import getFullIssueIdFromLeadingSubstr, getPathFromId
 from issues.issue import Issue
-from subprocess_helper import getCmd
+from utils.subprocess_helper import getCmd
 import commit_helper
 
 NAME = "rm"

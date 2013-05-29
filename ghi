@@ -19,8 +19,8 @@ import config
 import subcmds
 import sys
 import os.path
-import subprocess_helper
-import utils 
+import utils.subprocess_helper
+from utils import which
 
 GHI_VERSION = "0.4.0"
 def printVersion():
@@ -87,7 +87,7 @@ if (knownCmd == False):
     bXCmd = False
     if sys.argv[0].count("ghi") and len(sys.argv) > 1:
         xcmd = "ghi-" + sys.argv[1]
-        if which(xcmd):
+        if which.which(xcmd):
             bXCmd = True
        
     if bXCmd:

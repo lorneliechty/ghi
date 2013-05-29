@@ -20,7 +20,7 @@ class _Module:
 	@property
 	def STATUS_OPTS(self):
 		'''List of legal issue status values'''
-		from subprocess_helper import getCmd
+		from utils.subprocess_helper import getCmd
 		if not hasattr(self, '_STATUS_OPTS'):
 			# Set the default status options to be used in case no
 			# config file is present (shouldn't happen, but whatevs)
@@ -40,7 +40,7 @@ class _Module:
 	@property
 	def GIT_ROOT(self):
 		'''Get the git top-level directory'''
-		from subprocess_helper import getCmd
+		from utils.subprocess_helper import getCmd
 		if not hasattr(self, '_GIT_ROOT'):
 			self._GIT_ROOT = getCmd('git rev-parse --show-toplevel')
 		return self._GIT_ROOT
@@ -69,7 +69,7 @@ class _Module:
 	@property
 	def GIT_EDITOR(self):
 		'''Get the root directory for all ghi files'''
-		from subprocess_helper import getCmd
+		from utils.subprocess_helper import getCmd
 		if not hasattr(self, '_GIT_EDITOR'):
 			self._GIT_EDITOR = getCmd('git config core.editor')
 		return self._GIT_EDITOR

@@ -21,7 +21,7 @@
 # It has been modified to be more ghi-specific since the AOSP version was
 # fairly 'repo' specific.
 
-from subprocess_helper import getCmd
+from utils.subprocess_helper import getCmd
 import os
 import select
 import sys

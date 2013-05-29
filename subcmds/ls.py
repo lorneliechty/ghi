@@ -23,7 +23,7 @@ from issues.display import IssueDisplayBuilder
 from issues.identifiers import getFullIssueIdFromLeadingSubstr
 from issues.issue import Issue
 from utils.pager import PageOutputBeyondThisPoint
-from subprocess_helper import getCmd
+from utils.subprocess_helper import getCmd
 import config
 import dircache
 import sys

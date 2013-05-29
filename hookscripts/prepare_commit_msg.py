@@ -15,7 +15,7 @@
 # limitations under the License.
 
 try:
-	from subprocess_helper import getCmd
+	from utils.subprocess_helper import getCmd
 	from issues.issue import Issue
 	from issues.display import IssueDisplayBuilder
 	import config

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from subprocess_helper import getCmd
+from utils.subprocess_helper import getCmd
 import config
 import os.path
 
