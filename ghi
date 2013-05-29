@@ -84,13 +84,18 @@ xcmd = None
 if (knownCmd == False):
     # If our passed-in arguments didn't contain a known command, then
     # there may have been a valid extension command
-    if sys.argv[0].count("ghi"):
+    bXCmd = False
+    if sys.argv[0].count("ghi") and len(sys.argv) > 1:
         xcmd = "ghi-" + sys.argv[1]
-        if which(xcmd) == None:
-            if optarg:
-                args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
-            else:
-                args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
+        if which(xcmd):
+            bXCmd = True
+       
+    if bXCmd:
+        pass
+    elif optarg:
+        args = parser.parse_args(sys.argv.insert(1,subcmds.ls.NAME))
+    else:
+        args = parser.parse_args(sys.argv.extend([subcmds.ls.NAME]))
 else:
     args = parser.parse_args()
 

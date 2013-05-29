@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from color import Color
+from utils.color import Color
 from console_display_utils import truncateOrPadStrToWidth
 from groups import group
 from groups.group import Group
