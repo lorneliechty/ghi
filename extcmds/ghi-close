@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# This example shows how a very simple (hack) command extension can be written
+# that simply provides a different way of executing ghi-rm
+
+git issue rm $@ 2> ghi-close.err \
+    | sed s/git\ issue\ rm/git\ issue\ close/ \
+    | sed s/ghi-rm/ghi-close/ \
+    | sed s/ghi\ rm/ghi\ close/ \
+    | sed s/remove/close/
+
+if [ -e ghi-close.err ]; then
+    cat ghi-close.err | sed s/ghi\ rm/ghi\ close/
+    rm ghi-close.err
+    exit 1
+fi
