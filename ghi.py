@@ -21,7 +21,7 @@ Usage:
     ghi.open_issue("Title", "Description", "AgentName")
 """
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 
 import os
 import re
@@ -55,6 +55,7 @@ class Issue:
     assigned_to: Optional[str] = None
     priority: Optional[str] = None
     refs: list[str] = field(default_factory=list)
+    closed_date: Optional[str] = None  # Set automatically when status → terminal
 
 
 # ── Constants ─────────────────────────────────────────────────
@@ -228,6 +229,7 @@ def _parse_issue(text: str) -> Issue:
         assigned_to=metadata.get("assigned_to") or None,
         priority=metadata.get("priority") or None,
         refs=refs_raw,
+        closed_date=metadata.get("closed_date") or None,
     )
 
 
@@ -239,6 +241,7 @@ def _serialize_issue(issue: Issue) -> str:
         "status": issue.status,
         "opened_by": issue.opened_by,
         "opened_date": issue.opened_date,
+        "closed_date": issue.closed_date,
         "labels": issue.labels,
         "assigned_to": issue.assigned_to,
         "priority": issue.priority,
@@ -282,6 +285,32 @@ def _issues_dir(root: Optional[str] = None) -> str:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _time_ago(iso_date: str) -> str:
+    """Return a human-readable relative time: '5m ago', '3h ago', 'Mar 10'."""
+    try:
+        then = datetime.fromisoformat(iso_date.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        seconds = int((now - then).total_seconds())
+        if seconds < 60:
+            return "just now"
+        elif seconds < 3600:
+            return f"{seconds // 60}m ago"
+        elif seconds < 86400:
+            return f"{seconds // 3600}h ago"
+        elif seconds < 7 * 86400:
+            return f"{seconds // 86400}d ago"
+        else:
+            return then.strftime("%b %d")
+    except Exception:
+        return ""
+
+
+# Statuses that mean an issue is resolved; used to set closed_date
+_TERMINAL_STATUSES = frozenset([
+    "closed", "resolved", "wont-fix", "done", "complete", "shipped",
+])
 
 
 def _resolve_issue_path(issue_id: str, root: str) -> str:
@@ -462,6 +491,13 @@ def update_status(
 
     old_status = issue.status
     issue.status = new_status
+
+    # Record when the issue first reaches a terminal status
+    if new_status in _TERMINAL_STATUSES and issue.closed_date is None:
+        issue.closed_date = _now_iso()
+    # Clear closed_date if explicitly reopened
+    elif new_status not in _TERMINAL_STATUSES:
+        issue.closed_date = None
 
     issue.comments.append(Comment(
         author=author,
@@ -734,6 +770,100 @@ def count_issues(root: Optional[str] = None) -> dict:
     return counts
 
 
+def metrics(root: Optional[str] = None) -> dict:
+    """Return tracker-level metrics for the issue set.
+
+    Returns a dict with:
+        total           — total issue count
+        open            — count with an active status (open or in-progress)
+        done            — count with a terminal status
+        by_status       — {status: count} for every distinct status
+        open_by_priority — {priority: count} for open/in-progress issues
+                           (priority None → "unset")
+        cycle_time_avg  — mean days from opened_date → closed_date
+                           (None when no closed issues have closed_date)
+        cycle_time_p50  — median days (None when no data)
+        closed_last_7d  — issues with closed_date in the last 7 days
+        closed_last_30d — issues with closed_date in the last 30 days
+
+    Cycle time is only computed for issues where closed_date was recorded
+    automatically by update_status() (v2.3.0+). Older issues show None.
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    all_issues = list_issues(root=root)
+
+    active_statuses = {"open", "in-progress"}
+    by_status: dict[str, int] = {}
+    open_count = 0
+    done_count = 0
+    open_by_priority: dict[str, int] = {}
+    cycle_times: list[float] = []
+    closed_7d = 0
+    closed_30d = 0
+
+    now = datetime.now(timezone.utc)
+    cutoff_7d  = now.timestamp() - 7  * 86400
+    cutoff_30d = now.timestamp() - 30 * 86400
+
+    for issue in all_issues:
+        by_status[issue.status] = by_status.get(issue.status, 0) + 1
+
+        is_active = issue.status in active_statuses
+        if is_active:
+            open_count += 1
+            pri_key = issue.priority or "unset"
+            open_by_priority[pri_key] = open_by_priority.get(pri_key, 0) + 1
+        else:
+            done_count += 1
+
+        if issue.closed_date:
+            try:
+                closed_ts = datetime.fromisoformat(
+                    issue.closed_date.replace("Z", "+00:00")
+                ).timestamp()
+                if closed_ts >= cutoff_7d:
+                    closed_7d += 1
+                if closed_ts >= cutoff_30d:
+                    closed_30d += 1
+
+                opened_ts = datetime.fromisoformat(
+                    issue.opened_date.replace("Z", "+00:00")
+                ).timestamp()
+                cycle_days = (closed_ts - opened_ts) / 86400
+                if cycle_days >= 0:
+                    cycle_times.append(cycle_days)
+            except Exception:
+                pass
+
+    if cycle_times:
+        cycle_times.sort()
+        avg = sum(cycle_times) / len(cycle_times)
+        mid = len(cycle_times) // 2
+        if len(cycle_times) % 2 == 0:
+            p50 = (cycle_times[mid - 1] + cycle_times[mid]) / 2
+        else:
+            p50 = cycle_times[mid]
+        cycle_time_avg = round(avg, 2)
+        cycle_time_p50 = round(p50, 2)
+    else:
+        cycle_time_avg = None
+        cycle_time_p50 = None
+
+    return {
+        "total": len(all_issues),
+        "open": open_count,
+        "done": done_count,
+        "by_status": by_status,
+        "open_by_priority": open_by_priority,
+        "cycle_time_avg": cycle_time_avg,
+        "cycle_time_p50": cycle_time_p50,
+        "closed_last_7d": closed_7d,
+        "closed_last_30d": closed_30d,
+    }
+
+
 def bulk_update_status(
     issue_ids: list[str],
     new_status: str,
@@ -821,7 +951,11 @@ def summary(root: Optional[str] = None) -> str:
             pri = f" !{issue.priority}" if issue.priority else ""
             assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
             refs_str = f" refs:{len(issue.refs)}" if issue.refs else ""
-            comments_str = f" ({len(issue.comments)}c)" if issue.comments else ""
+            if issue.comments:
+                age = _time_ago(issue.comments[-1].date)
+                comments_str = f" ({len(issue.comments)}c, {age})" if age else f" ({len(issue.comments)}c)"
+            else:
+                comments_str = ""
             labels_str = f" [{', '.join(issue.labels)}]" if issue.labels else ""
             lines.append(
                 f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
@@ -836,7 +970,11 @@ def summary(root: Optional[str] = None) -> str:
             for issue in issues:
                 pri = f" !{issue.priority}" if issue.priority else ""
                 assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
-                comments_str = f" ({len(issue.comments)}c)" if issue.comments else ""
+                if issue.comments:
+                    age = _time_ago(issue.comments[-1].date)
+                    comments_str = f" ({len(issue.comments)}c, {age})" if age else f" ({len(issue.comments)}c)"
+                else:
+                    comments_str = ""
                 lines.append(
                     f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
                     f"{comments_str}"

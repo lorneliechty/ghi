@@ -875,6 +875,181 @@ def test_comment_accepts_issue_object():
         cleanup(d)
 
 
+# ── v2.3.0 feature tests ─────────────────────────────────────
+
+
+def test_closed_date_set_on_terminal_status():
+    """update_status to a terminal status should set closed_date."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Close me", "Will be closed.", "Test", root=d)
+        assert issue.closed_date is None
+
+        updated = ghi.update_status(issue.id, "closed", "Test", "Done.", root=d)
+        assert updated.closed_date is not None
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.closed_date is not None
+        # Should be an ISO timestamp
+        assert "T" in read_back.closed_date
+    finally:
+        cleanup(d)
+
+
+def test_closed_date_set_on_resolved():
+    """resolved is also a terminal status — should record closed_date."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Resolve me", "Will be resolved.", "Test", root=d)
+        updated = ghi.update_status(issue.id, "resolved", "Test", "Fixed.", root=d)
+        assert updated.closed_date is not None
+    finally:
+        cleanup(d)
+
+
+def test_closed_date_not_set_on_open():
+    """Moving to a non-terminal status should not set closed_date."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("In progress", "Working on it.", "Test", root=d)
+        updated = ghi.update_status(issue.id, "in-progress", "Test", "Started.", root=d)
+        assert updated.closed_date is None
+    finally:
+        cleanup(d)
+
+
+def test_closed_date_cleared_on_reopen():
+    """Reopening a closed issue should clear closed_date."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Flappy issue", "Opens and closes.", "Test", root=d)
+        closed = ghi.update_status(issue.id, "closed", "Test", "Done.", root=d)
+        assert closed.closed_date is not None
+
+        reopened = ghi.update_status(issue.id, "open", "Test", "Regression found.", root=d)
+        assert reopened.closed_date is None
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.closed_date is None
+    finally:
+        cleanup(d)
+
+
+def test_closed_date_not_overwritten():
+    """A second terminal transition should not change the original closed_date."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Terminal twice", "Hmm.", "Test", root=d)
+        first_close = ghi.update_status(issue.id, "resolved", "Test", "Fixed.", root=d)
+        original_date = first_close.closed_date
+
+        second = ghi.update_status(issue.id, "closed", "Test", "Double close.", root=d)
+        assert second.closed_date == original_date
+    finally:
+        cleanup(d)
+
+
+def test_closed_date_roundtrip():
+    """closed_date should survive serialize/parse roundtrip."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Roundtrip", "Desc.", "Test", root=d)
+        ghi.update_status(issue.id, "closed", "Test", "Done.", root=d)
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.closed_date is not None
+        # Parse the date to ensure it's valid ISO format
+        from datetime import datetime, timezone
+        dt = datetime.fromisoformat(read_back.closed_date.replace("Z", "+00:00"))
+        assert dt.year >= 2026
+    finally:
+        cleanup(d)
+
+
+def test_metrics_empty():
+    """metrics() on empty repo returns zeros."""
+    d = make_temp_repo()
+    try:
+        m = ghi.metrics(root=d)
+        assert m["total"] == 0
+        assert m["open"] == 0
+        assert m["done"] == 0
+        assert m["cycle_time_avg"] is None
+        assert m["cycle_time_p50"] is None
+        assert m["closed_last_7d"] == 0
+        assert m["closed_last_30d"] == 0
+    finally:
+        cleanup(d)
+
+
+def test_metrics_basic():
+    """metrics() should count open and done issues."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", priority="high", root=d)
+        ghi.open_issue("B", "B", "Test", priority="low", root=d)
+        c = ghi.open_issue("C", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        m = ghi.metrics(root=d)
+        assert m["total"] == 3
+        assert m["open"] == 2
+        assert m["done"] == 1
+        assert m["closed_last_7d"] == 1
+        assert m["closed_last_30d"] == 1
+        assert m["cycle_time_avg"] is not None
+        assert m["cycle_time_p50"] is not None
+        assert m["cycle_time_avg"] >= 0
+    finally:
+        cleanup(d)
+
+
+def test_metrics_open_by_priority():
+    """metrics() should break open issues down by priority."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", priority="critical", root=d)
+        ghi.open_issue("B", "B", "Test", priority="high", root=d)
+        ghi.open_issue("C", "C", "Test", root=d)  # No priority
+
+        m = ghi.metrics(root=d)
+        assert m["open_by_priority"].get("critical") == 1
+        assert m["open_by_priority"].get("high") == 1
+        assert m["open_by_priority"].get("unset") == 1
+    finally:
+        cleanup(d)
+
+
+def test_metrics_by_status():
+    """metrics()['by_status'] should reflect all status values."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("A", "A", "Test", root=d)
+        b = ghi.open_issue("B", "B", "Test", root=d)
+        ghi.update_status(a.id, "closed", "Test", "Done.", root=d)
+        ghi.update_status(b.id, "resolved", "Test", "Fixed.", root=d)
+
+        m = ghi.metrics(root=d)
+        assert m["by_status"].get("closed") == 1
+        assert m["by_status"].get("resolved") == 1
+    finally:
+        cleanup(d)
+
+
+def test_summary_shows_comment_age():
+    """summary() should show time since last comment, not just count."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Has comments", "Desc.", "Test", root=d)
+        ghi.comment(issue.id, "Reviewer", "Looks good.", root=d)
+
+        output = ghi.summary(root=d)
+        # Should show count AND age indicator
+        assert "(1c," in output  # comma indicates age follows
+    finally:
+        cleanup(d)
+
+
 # ── Run all tests ─────────────────────────────────────────────
 
 
@@ -926,6 +1101,18 @@ def run_all():
         test_bulk_update_status,
         test_bulk_update_status_with_objects,
         test_comment_accepts_issue_object,
+        # v2.3.0 tests
+        test_closed_date_set_on_terminal_status,
+        test_closed_date_set_on_resolved,
+        test_closed_date_not_set_on_open,
+        test_closed_date_cleared_on_reopen,
+        test_closed_date_not_overwritten,
+        test_closed_date_roundtrip,
+        test_metrics_empty,
+        test_metrics_basic,
+        test_metrics_open_by_priority,
+        test_metrics_by_status,
+        test_summary_shows_comment_age,
     ]
 
     passed = 0
