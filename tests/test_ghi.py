@@ -144,6 +144,49 @@ def test_parse_title_with_special_chars():
     assert parsed.title == issue.title
 
 
+def test_parse_roundtrip_with_new_fields():
+    """Issues with assigned_to, priority, and refs survive roundtrip."""
+    issue = Issue(
+        id="new-fields-1",
+        title="Test new fields",
+        status="in-progress",
+        opened_by="Maryam",
+        opened_date="2026-03-12T00:00:00Z",
+        labels=["bug"],
+        description="Testing new fields.",
+        comments=[],
+        assigned_to="Kwame",
+        priority="high",
+        refs=["abc-123", "def-456"],
+    )
+
+    text = ghi._serialize_issue(issue)
+    parsed = ghi._parse_issue(text)
+
+    assert parsed.assigned_to == "Kwame"
+    assert parsed.priority == "high"
+    assert parsed.refs == ["abc-123", "def-456"]
+
+
+def test_parse_without_new_fields():
+    """v2.0 issues (no assigned_to/priority/refs) parse with defaults."""
+    text = """---
+id: legacy-1
+title: Old-style issue
+status: open
+opened_by: Wiktor
+opened_date: 2026-03-12T00:00:00Z
+labels: [bug]
+---
+
+Description from v2.0 format.
+"""
+    parsed = ghi._parse_issue(text)
+    assert parsed.assigned_to is None
+    assert parsed.priority is None
+    assert parsed.refs == []
+
+
 # ── Core API tests ────────────────────────────────────────────
 
 
@@ -203,6 +246,67 @@ def test_open_and_read():
         assert read_back.title == "Test issue"
         assert read_back.description == "Something is broken."
         assert read_back.comments == []
+    finally:
+        cleanup(d)
+
+
+def test_open_with_assignment_and_priority():
+    """open_issue should accept assigned_to and priority."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue(
+            title="Assigned issue",
+            description="Has an owner and priority.",
+            author="Ren",
+            assigned_to="Kwame",
+            priority="high",
+            root=d,
+        )
+
+        assert issue.assigned_to == "Kwame"
+        assert issue.priority == "high"
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.assigned_to == "Kwame"
+        assert read_back.priority == "high"
+    finally:
+        cleanup(d)
+
+
+def test_open_with_invalid_priority():
+    """open_issue should reject invalid priority values."""
+    d = make_temp_repo()
+    try:
+        raised = False
+        try:
+            ghi.open_issue(
+                title="Bad priority",
+                description="Should fail.",
+                author="Test",
+                priority="urgent",  # Not a valid value
+                root=d,
+            )
+        except ValueError as e:
+            raised = True
+            assert "Invalid priority" in str(e)
+        assert raised, "Should have raised ValueError"
+    finally:
+        cleanup(d)
+
+
+def test_open_with_refs():
+    """open_issue should accept cross-references."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("Issue A", "First", "Test", root=d)
+        b = ghi.open_issue(
+            "Issue B", "References A", "Test",
+            refs=[a.id],
+            root=d,
+        )
+
+        read_back = ghi.read_issue(b.id, root=d)
+        assert a.id in read_back.refs
     finally:
         cleanup(d)
 
@@ -281,6 +385,90 @@ def test_update_description():
         cleanup(d)
 
 
+def test_assign():
+    """assign() should update assigned_to and add audit comment."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Needs owner", "Unassigned.", "Ren", root=d)
+        assert issue.assigned_to is None
+
+        updated = ghi.assign(issue.id, "Kwame", "Ren", root=d)
+        assert updated.assigned_to == "Kwame"
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.assigned_to == "Kwame"
+        assert len(read_back.comments) == 1
+        assert "unassigned → Kwame" in read_back.comments[0].text
+    finally:
+        cleanup(d)
+
+
+def test_set_priority():
+    """set_priority() should update priority and add audit comment."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Low bug", "Minor.", "Test", root=d)
+        assert issue.priority is None
+
+        updated = ghi.set_priority(issue.id, "critical", "Test", root=d)
+        assert updated.priority == "critical"
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert read_back.priority == "critical"
+        assert "unset → critical" in read_back.comments[0].text
+    finally:
+        cleanup(d)
+
+
+def test_set_invalid_priority():
+    """set_priority() should reject invalid values."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Test", "Test", "Test", root=d)
+        raised = False
+        try:
+            ghi.set_priority(issue.id, "blocker", "Test", root=d)
+        except ValueError:
+            raised = True
+        assert raised, "Should have raised ValueError"
+    finally:
+        cleanup(d)
+
+
+def test_add_ref():
+    """add_ref() should add cross-reference and audit comment."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("Issue A", "First", "Test", root=d)
+        b = ghi.open_issue("Issue B", "Second", "Test", root=d)
+
+        ghi.add_ref(a.id, b.id, "Test", root=d)
+
+        read_back = ghi.read_issue(a.id, root=d)
+        assert b.id in read_back.refs
+        assert len(read_back.comments) == 1
+        assert "Linked" in read_back.comments[0].text
+    finally:
+        cleanup(d)
+
+
+def test_add_ref_idempotent():
+    """Adding the same ref twice should not duplicate."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("Issue A", "First", "Test", root=d)
+        b = ghi.open_issue("Issue B", "Second", "Test", root=d)
+
+        ghi.add_ref(a.id, b.id, "Test", root=d)
+        ghi.add_ref(a.id, b.id, "Test", root=d)
+
+        read_back = ghi.read_issue(a.id, root=d)
+        assert read_back.refs.count(b.id) == 1
+        assert len(read_back.comments) == 1  # Only one audit comment
+    finally:
+        cleanup(d)
+
+
 def test_list_all():
     d = make_temp_repo()
     try:
@@ -322,6 +510,51 @@ def test_list_filter_label():
         bugs = ghi.list_issues(label="bug", root=d)
         assert len(bugs) == 1
         assert bugs[0].title == "Bug"
+    finally:
+        cleanup(d)
+
+
+def test_list_filter_assigned():
+    """list_issues should filter by assigned_to."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("A", "A", "Test", assigned_to="Kwame", root=d)
+        b = ghi.open_issue("B", "B", "Test", assigned_to="Ren", root=d)
+        c = ghi.open_issue("C", "C", "Test", root=d)  # Unassigned
+
+        kwame_issues = ghi.list_issues(assigned_to="Kwame", root=d)
+        assert len(kwame_issues) == 1
+        assert kwame_issues[0].title == "A"
+    finally:
+        cleanup(d)
+
+
+def test_list_filter_priority():
+    """list_issues should filter by priority."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Crit", "Critical", "Test", priority="critical", root=d)
+        ghi.open_issue("Low", "Low", "Test", priority="low", root=d)
+        ghi.open_issue("None", "No priority", "Test", root=d)
+
+        crits = ghi.list_issues(priority="critical", root=d)
+        assert len(crits) == 1
+        assert crits[0].title == "Crit"
+    finally:
+        cleanup(d)
+
+
+def test_list_multi_filter():
+    """Multiple filters should AND together."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", labels=["bug"], priority="high", root=d)
+        ghi.open_issue("B", "B", "Test", labels=["bug"], priority="low", root=d)
+        ghi.open_issue("C", "C", "Test", labels=["enhancement"], priority="high", root=d)
+
+        results = ghi.list_issues(label="bug", priority="high", root=d)
+        assert len(results) == 1
+        assert results[0].title == "A"
     finally:
         cleanup(d)
 
@@ -406,6 +639,54 @@ def test_deployed_library_works():
         cleanup(d)
 
 
+def test_summary_output():
+    """summary() should return a compact dashboard."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Bug A", "A", "Test", labels=["bug"], priority="critical", root=d)
+        ghi.open_issue("Feature B", "B", "Test", labels=["enhancement"], assigned_to="Kwame", root=d)
+        c = ghi.open_issue("Done C", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done", root=d)
+
+        output = ghi.summary(root=d)
+
+        assert "3 issues" in output
+        assert "2 active" in output
+        assert "[OPEN]" in output
+        assert "[CLOSED]" in output
+        assert "!critical" in output
+        assert "@Kwame" in output
+    finally:
+        cleanup(d)
+
+
+def test_summary_empty():
+    """summary() on empty repo returns sensible message."""
+    d = make_temp_repo()
+    try:
+        output = ghi.summary(root=d)
+        assert "No issues found" in output
+    finally:
+        cleanup(d)
+
+
+def test_none_fields_not_serialized():
+    """None-valued fields should not appear in frontmatter."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("No extras", "Plain issue.", "Test", root=d)
+
+        filepath = os.path.join(d, ".ghi", "issues", f"{issue.id}.md")
+        with open(filepath, "r") as f:
+            raw = f.read()
+
+        assert "assigned_to" not in raw
+        assert "priority" not in raw
+        assert "refs" not in raw
+    finally:
+        cleanup(d)
+
+
 # ── Run all tests ─────────────────────────────────────────────
 
 
@@ -415,20 +696,36 @@ def run_all():
         test_parse_no_comments,
         test_parse_multiline_comment,
         test_parse_title_with_special_chars,
+        test_parse_roundtrip_with_new_fields,
+        test_parse_without_new_fields,
         test_init_creates_structure,
         test_init_deploys_library,
         test_init_idempotent,
         test_open_and_read,
+        test_open_with_assignment_and_priority,
+        test_open_with_invalid_priority,
+        test_open_with_refs,
         test_comment_appends,
         test_update_status,
         test_update_description,
+        test_assign,
+        test_set_priority,
+        test_set_invalid_priority,
+        test_add_ref,
+        test_add_ref_idempotent,
         test_list_all,
         test_list_filter_status,
         test_list_filter_label,
+        test_list_filter_assigned,
+        test_list_filter_priority,
+        test_list_multi_filter,
         test_find_issues,
         test_prefix_id_resolution,
         test_file_is_readable_markdown,
         test_deployed_library_works,
+        test_summary_output,
+        test_summary_empty,
+        test_none_fields_not_serialized,
     ]
 
     passed = 0

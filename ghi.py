@@ -21,7 +21,7 @@ Usage:
     ghi.open_issue("Title", "Description", "AgentName")
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 import os
 import re
@@ -52,6 +52,9 @@ class Issue:
     labels: list[str]
     description: str
     comments: list[Comment] = field(default_factory=list)
+    assigned_to: Optional[str] = None
+    priority: Optional[str] = None
+    refs: list[str] = field(default_factory=list)
 
 
 # ── Constants ─────────────────────────────────────────────────
@@ -60,6 +63,8 @@ class Issue:
 GHI_DIR = ".ghi"
 ISSUES_DIR = os.path.join(GHI_DIR, "issues")
 CONFIG_FILE = os.path.join(GHI_DIR, "config.yaml")
+
+VALID_PRIORITIES = ["critical", "high", "medium", "low"]
 
 DEFAULT_CONFIG = """\
 # ghi configuration
@@ -134,6 +139,8 @@ def _serialize_frontmatter(metadata: dict) -> str:
     """Serialize metadata dict to YAML frontmatter."""
     lines = ["---"]
     for key, val in metadata.items():
+        if val is None:
+            continue  # Skip None fields entirely
         if isinstance(val, list):
             items = ", ".join(val)
             lines.append(f"{key}: [{items}]")
@@ -204,6 +211,11 @@ def _parse_issue(text: str) -> Issue:
     metadata, body = _parse_frontmatter(text)
     description, comments = _parse_comments(body)
 
+    # Parse refs — stored as list, default to empty
+    refs_raw = metadata.get("refs", [])
+    if isinstance(refs_raw, str):
+        refs_raw = [refs_raw] if refs_raw else []
+
     return Issue(
         id=metadata.get("id", ""),
         title=metadata.get("title", ""),
@@ -213,6 +225,9 @@ def _parse_issue(text: str) -> Issue:
         labels=metadata.get("labels", []),
         description=description,
         comments=comments,
+        assigned_to=metadata.get("assigned_to") or None,
+        priority=metadata.get("priority") or None,
+        refs=refs_raw,
     )
 
 
@@ -225,6 +240,9 @@ def _serialize_issue(issue: Issue) -> str:
         "opened_by": issue.opened_by,
         "opened_date": issue.opened_date,
         "labels": issue.labels,
+        "assigned_to": issue.assigned_to,
+        "priority": issue.priority,
+        "refs": issue.refs if issue.refs else None,
     }
 
     parts = [
@@ -344,6 +362,9 @@ def open_issue(
     description: str,
     author: str,
     labels: Optional[list[str]] = None,
+    assigned_to: Optional[str] = None,
+    priority: Optional[str] = None,
+    refs: Optional[list[str]] = None,
     root: Optional[str] = None,
 ) -> Issue:
     """Create a new issue. Returns the Issue object.
@@ -354,10 +375,19 @@ def open_issue(
             owns this section and may refine it later.
         author: Name of the agent or person opening the issue.
         labels: Optional list of labels/tags.
+        assigned_to: Optional agent name who should work on this.
+        priority: Optional priority level (critical/high/medium/low).
+        refs: Optional list of related issue IDs (cross-references).
         root: Repo root (auto-detected if None).
     """
     if root is None:
         root = _find_ghi_root()
+
+    if priority and priority not in VALID_PRIORITIES:
+        raise ValueError(
+            f"Invalid priority '{priority}'. "
+            f"Must be one of: {', '.join(VALID_PRIORITIES)}"
+        )
 
     issue = Issue(
         id=str(uuid.uuid4()),
@@ -368,6 +398,9 @@ def open_issue(
         labels=labels or [],
         description=description.strip(),
         comments=[],
+        assigned_to=assigned_to,
+        priority=priority,
+        refs=refs or [],
     )
 
     filepath = os.path.join(_issues_dir(root), f"{issue.id}.md")
@@ -389,6 +422,8 @@ def comment(
     agent's comments. This is convention, not enforcement —
     management between mutually consenting adults.
     """
+    if hasattr(issue_id, 'id'):
+        issue_id = issue_id.id
     if root is None:
         root = _find_ghi_root()
 
@@ -433,6 +468,109 @@ def update_status(
     return issue
 
 
+def assign(
+    issue_id: str,
+    assignee: str,
+    author: str,
+    root: Optional[str] = None,
+) -> Issue:
+    """Assign an issue to an agent. Adds an audit comment."""
+    if root is None:
+        root = _find_ghi_root()
+
+    filepath = _resolve_issue_path(issue_id, root)
+    issue = _read_from_path(filepath)
+
+    old_assignee = issue.assigned_to or "unassigned"
+    issue.assigned_to = assignee
+
+    issue.comments.append(Comment(
+        author=author,
+        date=_now_iso(),
+        text=f"**Assigned:** {old_assignee} → {assignee}",
+    ))
+
+    with open(filepath, "w") as f:
+        f.write(_serialize_issue(issue))
+
+    return issue
+
+
+def set_priority(
+    issue_id: str,
+    priority: str,
+    author: str,
+    root: Optional[str] = None,
+) -> Issue:
+    """Set or change an issue's priority. Adds an audit comment."""
+    if root is None:
+        root = _find_ghi_root()
+
+    if priority not in VALID_PRIORITIES:
+        raise ValueError(
+            f"Invalid priority '{priority}'. "
+            f"Must be one of: {', '.join(VALID_PRIORITIES)}"
+        )
+
+    filepath = _resolve_issue_path(issue_id, root)
+    issue = _read_from_path(filepath)
+
+    old_priority = issue.priority or "unset"
+    issue.priority = priority
+
+    issue.comments.append(Comment(
+        author=author,
+        date=_now_iso(),
+        text=f"**Priority changed:** {old_priority} → {priority}",
+    ))
+
+    with open(filepath, "w") as f:
+        f.write(_serialize_issue(issue))
+
+    return issue
+
+
+def add_ref(
+    issue_id: str,
+    ref_issue_id: str,
+    author: str,
+    root: Optional[str] = None,
+) -> Issue:
+    """Add a cross-reference to another issue. Adds audit comment.
+
+    Both issue_id and ref_issue_id should be strings (full UUID or
+    prefix). If you have an Issue object, pass issue.id instead.
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    # Handle common mistake: passing Issue object instead of string
+    if hasattr(issue_id, 'id'):
+        issue_id = issue_id.id
+    if hasattr(ref_issue_id, 'id'):
+        ref_issue_id = ref_issue_id.id
+
+    filepath = _resolve_issue_path(issue_id, root)
+    issue = _read_from_path(filepath)
+
+    # Resolve the ref to its full ID
+    ref_path = _resolve_issue_path(ref_issue_id, root)
+    ref_full_id = os.path.basename(ref_path).replace(".md", "")
+
+    if ref_full_id not in issue.refs:
+        issue.refs.append(ref_full_id)
+        issue.comments.append(Comment(
+            author=author,
+            date=_now_iso(),
+            text=f"**Linked:** → {ref_full_id[:8]}",
+        ))
+
+        with open(filepath, "w") as f:
+            f.write(_serialize_issue(issue))
+
+    return issue
+
+
 def update_description(
     issue_id: str,
     author: str,
@@ -473,9 +611,15 @@ def read_issue(
 def list_issues(
     status: Optional[str] = None,
     label: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    priority: Optional[str] = None,
     root: Optional[str] = None,
 ) -> list[Issue]:
-    """List all issues, optionally filtered. Newest first."""
+    """List all issues, optionally filtered. Newest first.
+
+    All filters are ANDed — an issue must match every specified
+    filter to be included.
+    """
     if root is None:
         root = _find_ghi_root()
 
@@ -496,6 +640,10 @@ def list_issues(
         if status and issue.status != status:
             continue
         if label and label not in issue.labels:
+            continue
+        if assigned_to and issue.assigned_to != assigned_to:
+            continue
+        if priority and issue.priority != priority:
             continue
 
         results.append(issue)
@@ -532,3 +680,79 @@ def find_issues(
 
     scored.sort(key=lambda x: (-x[0], x[1].opened_date))
     return [issue for _, issue in scored]
+
+
+def summary(root: Optional[str] = None) -> str:
+    """Return a compact text dashboard of all issues.
+
+    Groups by status, shows priority and assignment, sorted by
+    priority within each group. Designed for agents to quickly
+    get the lay of the land.
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    all_issues = list_issues(root=root)
+
+    if not all_issues:
+        return "No issues found."
+
+    # Group by status
+    active_statuses = ["open", "in-progress"]
+    terminal_statuses = ["resolved", "closed", "wont-fix"]
+    grouped: dict[str, list[Issue]] = {}
+    for issue in all_issues:
+        grouped.setdefault(issue.status, []).append(issue)
+
+    # Priority sort order (critical first, unset last)
+    priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+    # Count active vs terminal
+    active_count = sum(
+        len(grouped.get(s, []))
+        for s in grouped
+        if s in active_statuses or s not in terminal_statuses
+    )
+    terminal_count = len(all_issues) - active_count
+
+    lines = []
+    total = len(all_issues)
+    lines.append(f"ghi: {total} issues ({active_count} active, {terminal_count} done)")
+    lines.append("=" * 60)
+
+    # Show active statuses first, then terminal, then any custom
+    seen = set()
+    status_display_order = active_statuses + terminal_statuses
+    for status in status_display_order:
+        issues = grouped.get(status, [])
+        seen.add(status)
+        if not issues:
+            continue
+        issues.sort(key=lambda i: priority_rank.get(i.priority or "", 4))
+        lines.append(f"\n[{status.upper()}] ({len(issues)})")
+        for issue in issues:
+            pri = f" !{issue.priority}" if issue.priority else ""
+            assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
+            refs_str = f" refs:{len(issue.refs)}" if issue.refs else ""
+            comments_str = f" ({len(issue.comments)}c)" if issue.comments else ""
+            labels_str = f" [{', '.join(issue.labels)}]" if issue.labels else ""
+            lines.append(
+                f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
+                f"{comments_str}{refs_str}{labels_str}"
+            )
+
+    # Any custom statuses not in the standard list
+    for status, issues in grouped.items():
+        if status not in seen:
+            issues.sort(key=lambda i: priority_rank.get(i.priority or "", 4))
+            lines.append(f"\n[{status.upper()}] ({len(issues)})")
+            for issue in issues:
+                pri = f" !{issue.priority}" if issue.priority else ""
+                assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
+                comments_str = f" ({len(issue.comments)}c)" if issue.comments else ""
+                lines.append(
+                    f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
+                    f"{comments_str}"
+                )
+
+    return "\n".join(lines)
