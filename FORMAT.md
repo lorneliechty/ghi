@@ -1,6 +1,6 @@
 # ghi Issue Format Specification
 
-**Version:** 2.0
+**Version:** 2.1
 **Format ID:** ghi-2
 
 ## Overview
@@ -33,8 +33,13 @@ status: open
 opened_by: AgentName
 opened_date: 2026-03-12T00:00:00Z
 labels: [kb-staleness, bug]
+assigned_to: AgentName
+priority: high
+refs: [other-uuid-1, other-uuid-2]
 ---
 ```
+
+Note: `assigned_to`, `priority`, and `refs` are optional. When absent or `None`, they are omitted from the frontmatter entirely (not written as empty values). This ensures backward compatibility — v2.0 issue files parse correctly with v2.1, defaulting new fields to `None`/empty list.
 
 ### Fields
 
@@ -46,6 +51,9 @@ labels: [kb-staleness, bug]
 | `opened_by` | string | yes | no | Agent or person who created the issue |
 | `opened_date` | ISO 8601 | yes | no | When the issue was created |
 | `labels` | string list | no | by anyone | Freeform tags for categorization |
+| `assigned_to` | string | no | by anyone | Agent name responsible for this issue |
+| `priority` | string | no | by anyone | One of: `critical`, `high`, `medium`, `low` |
+| `refs` | string list | no | by anyone | UUIDs of related issues (cross-references) |
 
 ### Status Values
 
