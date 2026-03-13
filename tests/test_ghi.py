@@ -226,6 +226,19 @@ def test_init_idempotent():
         cleanup(d)
 
 
+def test_init_creates_gitignore():
+    """init() should create a .gitignore excluding __pycache__ and bytecode."""
+    d = make_temp_repo()
+    try:
+        gitignore = os.path.join(d, ".ghi", ".gitignore")
+        assert os.path.isfile(gitignore), ".gitignore should be created in .ghi/"
+        content = open(gitignore).read()
+        assert "__pycache__/" in content
+        assert "*.pyc" in content
+    finally:
+        cleanup(d)
+
+
 def test_open_and_read():
     d = make_temp_repo()
     try:
@@ -876,6 +889,7 @@ def run_all():
         test_init_creates_structure,
         test_init_deploys_library,
         test_init_idempotent,
+        test_init_creates_gitignore,
         test_open_and_read,
         test_open_with_assignment_and_priority,
         test_open_with_invalid_priority,

@@ -354,6 +354,13 @@ def init(path: str = ".") -> str:
         with open(gitkeep, "w") as f:
             pass
 
+    # Exclude Python bytecode from the repo — agents frequently run Python
+    # in the same directory and __pycache__ ends up committed otherwise
+    gitignore = os.path.join(ghi_path, ".gitignore")
+    if not os.path.exists(gitignore):
+        with open(gitignore, "w") as f:
+            f.write("__pycache__/\n*.pyc\n*.pyo\n")
+
     return ghi_path
 
 
