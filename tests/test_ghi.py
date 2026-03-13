@@ -1050,6 +1050,260 @@ def test_summary_shows_comment_age():
         cleanup(d)
 
 
+# ── v2.4.0 feature tests ─────────────────────────────────────
+
+
+def test_init_creates_root_gitignore():
+    """init() should create a root-level .gitignore with bytecode patterns."""
+    d = make_temp_repo()
+    try:
+        root_gitignore = os.path.join(d, ".gitignore")
+        assert os.path.isfile(root_gitignore), "root .gitignore should be created"
+        content = open(root_gitignore).read()
+        assert "__pycache__/" in content
+        assert "*.pyc" in content
+    finally:
+        cleanup(d)
+
+
+def test_init_root_gitignore_idempotent():
+    """Calling init() twice should not duplicate .gitignore entries."""
+    d = make_temp_repo()
+    try:
+        ghi.init(d)  # Second call
+        root_gitignore = os.path.join(d, ".gitignore")
+        content = open(root_gitignore).read()
+        # Should appear exactly once
+        assert content.count("__pycache__/") == 1
+    finally:
+        cleanup(d)
+
+
+def test_init_root_gitignore_appends_to_existing():
+    """init() should append to an existing .gitignore without overwriting."""
+    import tempfile
+    d = tempfile.mkdtemp(prefix="ghi_test_")
+    try:
+        # Write a .gitignore before init
+        with open(os.path.join(d, ".gitignore"), "w") as f:
+            f.write("node_modules/\n.env\n")
+        ghi.init(d)
+        content = open(os.path.join(d, ".gitignore")).read()
+        # Original entries preserved
+        assert "node_modules/" in content
+        assert ".env" in content
+        # Bytecode patterns added
+        assert "__pycache__/" in content
+    finally:
+        cleanup(d)
+
+
+def test_list_issues_multi_status():
+    """list_issues should accept a list of statuses."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("Open", "A", "Test", root=d)
+        b = ghi.open_issue("In Progress", "B", "Test", root=d)
+        ghi.update_status(b.id, "in-progress", "Test", "Started.", root=d)
+        c = ghi.open_issue("Closed", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        active = ghi.list_issues(status=["open", "in-progress"], root=d)
+        assert len(active) == 2
+        titles = {i.title for i in active}
+        assert "Open" in titles
+        assert "In Progress" in titles
+        assert "Closed" not in titles
+    finally:
+        cleanup(d)
+
+
+def test_list_issues_active_shorthand():
+    """list_issues(status='active') should return open + in-progress."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Open", "A", "Test", root=d)
+        b = ghi.open_issue("In Progress", "B", "Test", root=d)
+        ghi.update_status(b.id, "in-progress", "Test", "Started.", root=d)
+        c = ghi.open_issue("Closed", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        active = ghi.list_issues(status="active", root=d)
+        assert len(active) == 2
+    finally:
+        cleanup(d)
+
+
+def test_list_issues_single_string_still_works():
+    """list_issues(status='open') should still work as before."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Open", "A", "Test", root=d)
+        b = ghi.open_issue("Closed", "B", "Test", root=d)
+        ghi.update_status(b.id, "closed", "Test", "Done.", root=d)
+
+        results = ghi.list_issues(status="open", root=d)
+        assert len(results) == 1
+        assert results[0].title == "Open"
+    finally:
+        cleanup(d)
+
+
+def test_stale_empty():
+    """stale() on empty repo returns empty list."""
+    d = make_temp_repo()
+    try:
+        results = ghi.stale(days=7, root=d)
+        assert results == []
+    finally:
+        cleanup(d)
+
+
+def test_stale_fresh_issue_not_stale():
+    """A just-opened issue should not be stale."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Fresh", "Just opened.", "Test", root=d)
+        results = ghi.stale(days=1, root=d)
+        assert len(results) == 0
+    finally:
+        cleanup(d)
+
+
+def test_stale_terminal_excluded():
+    """Closed issues should not appear in stale()."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Old closed", "Done.", "Test", root=d)
+        ghi.update_status(issue.id, "closed", "Test", "Done.", root=d)
+        # Even with days=0, closed issues are excluded
+        results = ghi.stale(days=0, root=d)
+        assert all(i.status not in ghi._TERMINAL_STATUSES for i in results)
+    finally:
+        cleanup(d)
+
+
+def test_stale_with_days_zero():
+    """stale(days=0) returns all non-terminal issues (everything is stale)."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", root=d)
+        ghi.open_issue("B", "B", "Test", root=d)
+        c = ghi.open_issue("C (closed)", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        results = ghi.stale(days=0, root=d)
+        assert len(results) == 2  # C excluded because it's terminal
+    finally:
+        cleanup(d)
+
+
+def test_summary_show_done_false():
+    """summary(show_done=False) should hide terminal issues."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Open bug", "A", "Test", root=d)
+        c = ghi.open_issue("Closed feature", "B", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        output = ghi.summary(show_done=False, root=d)
+        assert "Open bug" in output
+        assert "Closed feature" not in output
+        assert "[CLOSED]" not in output
+    finally:
+        cleanup(d)
+
+
+def test_summary_limit_done():
+    """summary(limit_done=1) should truncate done issues."""
+    d = make_temp_repo()
+    try:
+        for i in range(3):
+            issue = ghi.open_issue(f"Done issue {i}", "A", "Test", root=d)
+            ghi.update_status(issue.id, "closed", "Test", "Done.", root=d)
+
+        output = ghi.summary(limit_done=1, root=d)
+        assert "and 2 more" in output
+    finally:
+        cleanup(d)
+
+
+def test_summary_assigned_to_filter():
+    """summary(assigned_to=...) should show only that agent's issues."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Zara issue", "A", "Test", assigned_to="Zara", root=d)
+        ghi.open_issue("Orion issue", "B", "Test", assigned_to="Orion", root=d)
+        ghi.open_issue("Unassigned", "C", "Test", root=d)
+
+        output = ghi.summary(assigned_to="Zara", root=d)
+        assert "Zara issue" in output
+        assert "Orion issue" not in output
+        assert "Unassigned" not in output
+    finally:
+        cleanup(d)
+
+
+def test_metrics_velocity():
+    """metrics() should include velocity (issues/day over last 7 days)."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("A", "A", "Test", root=d)
+        b = ghi.open_issue("B", "B", "Test", root=d)
+        ghi.update_status(a.id, "closed", "Test", "Done.", root=d)
+        ghi.update_status(b.id, "closed", "Test", "Done.", root=d)
+
+        m = ghi.metrics(root=d)
+        assert "velocity" in m
+        # 2 closed in the last 7 days → velocity = 2/7 ≈ 0.29
+        assert m["velocity"] == round(2 / 7, 2)
+    finally:
+        cleanup(d)
+
+
+def test_metrics_by_assignee():
+    """metrics() should break open issues down by assignee."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", assigned_to="Zara", root=d)
+        ghi.open_issue("B", "B", "Test", assigned_to="Zara", root=d)
+        ghi.open_issue("C", "C", "Test", assigned_to="Orion", root=d)
+        ghi.open_issue("D unassigned", "D", "Test", root=d)
+
+        m = ghi.metrics(root=d)
+        assert m["by_assignee"].get("Zara") == 2
+        assert m["by_assignee"].get("Orion") == 1
+        assert m["by_assignee"].get("unassigned") == 1
+    finally:
+        cleanup(d)
+
+
+def test_metrics_stale_count():
+    """metrics() stale_count should be 0 for a fresh repo."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Fresh A", "A", "Test", root=d)
+        ghi.open_issue("Fresh B", "B", "Test", root=d)
+
+        m = ghi.metrics(root=d)
+        assert "stale_count" in m
+        # Just-created issues are not stale
+        assert m["stale_count"] == 0
+    finally:
+        cleanup(d)
+
+
+def test_summary_no_comments_shows_opened_age():
+    """Issues with no comments should show 'opened Xh ago' in summary."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Silent issue", "No comments ever.", "Test", root=d)
+        output = ghi.summary(root=d)
+        assert "opened" in output
+    finally:
+        cleanup(d)
+
+
 # ── Run all tests ─────────────────────────────────────────────
 
 
@@ -1113,6 +1367,24 @@ def run_all():
         test_metrics_open_by_priority,
         test_metrics_by_status,
         test_summary_shows_comment_age,
+        # v2.4.0 tests
+        test_init_creates_root_gitignore,
+        test_init_root_gitignore_idempotent,
+        test_init_root_gitignore_appends_to_existing,
+        test_list_issues_multi_status,
+        test_list_issues_active_shorthand,
+        test_list_issues_single_string_still_works,
+        test_stale_empty,
+        test_stale_fresh_issue_not_stale,
+        test_stale_terminal_excluded,
+        test_stale_with_days_zero,
+        test_summary_show_done_false,
+        test_summary_limit_done,
+        test_summary_assigned_to_filter,
+        test_metrics_velocity,
+        test_metrics_by_assignee,
+        test_metrics_stale_count,
+        test_summary_no_comments_shows_opened_age,
     ]
 
     passed = 0

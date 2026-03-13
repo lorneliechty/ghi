@@ -21,7 +21,7 @@ Usage:
     ghi.open_issue("Title", "Description", "AgentName")
 """
 
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 
 import os
 import re
@@ -313,6 +313,29 @@ _TERMINAL_STATUSES = frozenset([
 ])
 
 
+def _ensure_root_gitignore(path: str) -> None:
+    """Create or update root-level .gitignore with Python bytecode patterns.
+
+    Safe to call on repos that already have a .gitignore — only adds
+    missing lines, never removes anything.
+    """
+    gitignore_path = os.path.join(path, ".gitignore")
+    patterns = ["__pycache__/", "*.pyc", "*.pyo"]
+
+    existing = ""
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, "r") as f:
+            existing = f.read()
+
+    missing = [p for p in patterns if p not in existing]
+    if missing:
+        with open(gitignore_path, "a") as f:
+            if existing and not existing.endswith("\n"):
+                f.write("\n")
+            f.write("# Python bytecode (managed by ghi.init)\n")
+            f.write("\n".join(missing) + "\n")
+
+
 def _resolve_issue_path(issue_id: str, root: str) -> str:
     """Resolve an issue ID (full or prefix) to a filepath."""
     issues_path = _issues_dir(root)
@@ -383,12 +406,15 @@ def init(path: str = ".") -> str:
         with open(gitkeep, "w") as f:
             pass
 
-    # Exclude Python bytecode from the repo — agents frequently run Python
-    # in the same directory and __pycache__ ends up committed otherwise
+    # Exclude Python bytecode from .ghi/ itself
     gitignore = os.path.join(ghi_path, ".gitignore")
     if not os.path.exists(gitignore):
         with open(gitignore, "w") as f:
             f.write("__pycache__/\n*.pyc\n*.pyo\n")
+
+    # Also protect the repo root — agents run Python there too, and
+    # .ghi/.gitignore only covers the .ghi/ subdirectory
+    _ensure_root_gitignore(os.path.abspath(path))
 
     return ghi_path
 
@@ -652,7 +678,7 @@ def read_issue(
 
 
 def list_issues(
-    status: Optional[str] = None,
+    status=None,
     label: Optional[str] = None,
     assigned_to: Optional[str] = None,
     priority: Optional[str] = None,
@@ -665,7 +691,9 @@ def list_issues(
     filter to be included.
 
     Args:
-        status: Filter by status (e.g., "open", "closed").
+        status: Filter by status. Accepts a single string ("open") or
+            a list of strings (["open", "in-progress"]) to match any.
+            The special value "active" expands to ["open", "in-progress"].
         label: Filter by label (issue must have this label).
         assigned_to: Filter by assignee name.
         priority: Filter by priority level.
@@ -674,6 +702,16 @@ def list_issues(
     """
     if root is None:
         root = _find_ghi_root()
+
+    # Normalize status to a set (or None for no filter)
+    if status is None:
+        status_filter = None
+    elif status == "active":
+        status_filter = {"open", "in-progress"}
+    elif isinstance(status, list):
+        status_filter = set(status)
+    else:
+        status_filter = {status}
 
     issues_path = _issues_dir(root)
     results = []
@@ -689,7 +727,7 @@ def list_issues(
         except Exception:
             continue
 
-        if status and issue.status != status:
+        if status_filter is not None and issue.status not in status_filter:
             continue
         if label and label not in issue.labels:
             continue
@@ -770,24 +808,86 @@ def count_issues(root: Optional[str] = None) -> dict:
     return counts
 
 
+def stale(days: int = 7, root: Optional[str] = None) -> list[Issue]:
+    """Return non-terminal issues with no activity for more than `days` days.
+
+    'Activity' means any comment. Issues with no comments are judged
+    by their opened_date. Terminal issues (closed, resolved, etc.) are
+    always excluded — only open/in-progress/custom-active issues are
+    considered.
+
+    Results are sorted oldest-activity-first so the most neglected
+    issues surface at the top.
+
+    Args:
+        days: Minimum days of inactivity to be considered stale.
+        root: Repo root (auto-detected if None).
+
+    Example:
+        for issue in ghi.stale(days=3):
+            print(issue.title, '— last activity:', issue.comments[-1].date
+                  if issue.comments else issue.opened_date)
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    now = datetime.now(timezone.utc)
+    cutoff_ts = now.timestamp() - days * 86400
+
+    results = []
+    for issue in list_issues(root=root):
+        # Skip terminal issues
+        if issue.status in _TERMINAL_STATUSES:
+            continue
+
+        # Activity date = last comment date, or opened_date if no comments
+        if issue.comments:
+            activity_date = issue.comments[-1].date
+        else:
+            activity_date = issue.opened_date
+
+        try:
+            activity_ts = datetime.fromisoformat(
+                activity_date.replace("Z", "+00:00")
+            ).timestamp()
+        except Exception:
+            continue
+
+        if activity_ts < cutoff_ts:
+            results.append(issue)
+
+    # Oldest activity first — most neglected at the top
+    results.sort(key=lambda i: (
+        i.comments[-1].date if i.comments else i.opened_date
+    ))
+    return results
+
+
 def metrics(root: Optional[str] = None) -> dict:
     """Return tracker-level metrics for the issue set.
 
     Returns a dict with:
-        total           — total issue count
-        open            — count with an active status (open or in-progress)
-        done            — count with a terminal status
-        by_status       — {status: count} for every distinct status
+        total            — total issue count
+        open             — count with an active status (open or in-progress)
+        done             — count with a terminal status
+        by_status        — {status: count} for every distinct status
         open_by_priority — {priority: count} for open/in-progress issues
                            (priority None → "unset")
-        cycle_time_avg  — mean days from opened_date → closed_date
+        by_assignee      — {assignee: count} for open/in-progress issues
+                           (unassigned → "unassigned")
+        stale_count      — open issues with no activity for 7+ days
+        velocity         — issues closed per day over the last 7 days
+                           (closed_last_7d / 7, rounded to 2 decimal places)
+        cycle_time_avg   — mean days from opened_date → closed_date
                            (None when no closed issues have closed_date)
-        cycle_time_p50  — median days (None when no data)
-        closed_last_7d  — issues with closed_date in the last 7 days
-        closed_last_30d — issues with closed_date in the last 30 days
+        cycle_time_p50   — median days (None when no data)
+        closed_last_7d   — issues with closed_date in the last 7 days
+        closed_last_30d  — issues with closed_date in the last 30 days
 
     Cycle time is only computed for issues where closed_date was recorded
     automatically by update_status() (v2.3.0+). Older issues show None.
+    Velocity is always computable and is the more useful signal in
+    short-burst projects where cycle_time_avg approaches zero.
     """
     if root is None:
         root = _find_ghi_root()
@@ -799,6 +899,7 @@ def metrics(root: Optional[str] = None) -> dict:
     open_count = 0
     done_count = 0
     open_by_priority: dict[str, int] = {}
+    by_assignee: dict[str, int] = {}
     cycle_times: list[float] = []
     closed_7d = 0
     closed_30d = 0
@@ -806,6 +907,8 @@ def metrics(root: Optional[str] = None) -> dict:
     now = datetime.now(timezone.utc)
     cutoff_7d  = now.timestamp() - 7  * 86400
     cutoff_30d = now.timestamp() - 30 * 86400
+    stale_cutoff = now.timestamp() - 7 * 86400
+    stale_count = 0
 
     for issue in all_issues:
         by_status[issue.status] = by_status.get(issue.status, 0) + 1
@@ -815,6 +918,22 @@ def metrics(root: Optional[str] = None) -> dict:
             open_count += 1
             pri_key = issue.priority or "unset"
             open_by_priority[pri_key] = open_by_priority.get(pri_key, 0) + 1
+
+            assignee_key = issue.assigned_to or "unassigned"
+            by_assignee[assignee_key] = by_assignee.get(assignee_key, 0) + 1
+
+            # Stale check: last activity older than 7 days
+            activity_date = (
+                issue.comments[-1].date if issue.comments else issue.opened_date
+            )
+            try:
+                activity_ts = datetime.fromisoformat(
+                    activity_date.replace("Z", "+00:00")
+                ).timestamp()
+                if activity_ts < stale_cutoff:
+                    stale_count += 1
+            except Exception:
+                pass
         else:
             done_count += 1
 
@@ -851,12 +970,17 @@ def metrics(root: Optional[str] = None) -> dict:
         cycle_time_avg = None
         cycle_time_p50 = None
 
+    velocity = round(closed_7d / 7.0, 2)
+
     return {
         "total": len(all_issues),
         "open": open_count,
         "done": done_count,
         "by_status": by_status,
         "open_by_priority": open_by_priority,
+        "by_assignee": by_assignee,
+        "stale_count": stale_count,
+        "velocity": velocity,
         "cycle_time_avg": cycle_time_avg,
         "cycle_time_p50": cycle_time_p50,
         "closed_last_7d": closed_7d,
@@ -899,12 +1023,28 @@ def bulk_update_status(
     return results
 
 
-def summary(root: Optional[str] = None) -> str:
+def summary(
+    root: Optional[str] = None,
+    show_done: bool = True,
+    limit_done: Optional[int] = None,
+    assigned_to: Optional[str] = None,
+) -> str:
     """Return a compact text dashboard of all issues.
 
     Groups by status, shows priority and assignment, sorted by
     priority within each group. Designed for agents to quickly
     get the lay of the land.
+
+    Args:
+        show_done: If False, skip terminal (done/closed/resolved) issues
+            entirely. Useful when you only care about active work.
+        limit_done: If set, show at most this many terminal issues per
+            status group. A "... N more" line is appended when truncated.
+            Ignored when show_done=False.
+        assigned_to: If set, only show issues assigned to this agent name.
+            Active issues without this assignee are hidden; done issues
+            are always filtered when this is set.
+        root: Repo root (auto-detected if None).
     """
     if root is None:
         root = _find_ghi_root()
@@ -916,7 +1056,7 @@ def summary(root: Optional[str] = None) -> str:
 
     # Group by status
     active_statuses = ["open", "in-progress"]
-    terminal_statuses = ["resolved", "closed", "wont-fix"]
+    terminal_statuses = ["resolved", "closed", "wont-fix", "done", "complete", "shipped"]
     grouped: dict[str, list[Issue]] = {}
     for issue in all_issues:
         grouped.setdefault(issue.status, []).append(issue)
@@ -924,60 +1064,80 @@ def summary(root: Optional[str] = None) -> str:
     # Priority sort order (critical first, unset last)
     priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
-    # Count active vs terminal
+    # Count active vs terminal across the full (unfiltered) set
     active_count = sum(
         len(grouped.get(s, []))
         for s in grouped
-        if s in active_statuses or s not in terminal_statuses
+        if s not in _TERMINAL_STATUSES
     )
     terminal_count = len(all_issues) - active_count
 
     lines = []
     total = len(all_issues)
-    lines.append(f"ghi: {total} issues ({active_count} active, {terminal_count} done)")
+    header = f"ghi: {total} issues ({active_count} active, {terminal_count} done)"
+    if assigned_to:
+        header += f" — showing @{assigned_to}"
+    lines.append(header)
     lines.append("=" * 60)
+
+    def _fmt_issue(issue: Issue) -> str:
+        pri = f" !{issue.priority}" if issue.priority else ""
+        assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
+        refs_str = f" refs:{len(issue.refs)}" if issue.refs else ""
+        if issue.comments:
+            age = _time_ago(issue.comments[-1].date)
+            comments_str = f" ({len(issue.comments)}c, {age})" if age else f" ({len(issue.comments)}c)"
+        else:
+            # For issues with no comments, show how long they've been open
+            age = _time_ago(issue.opened_date)
+            comments_str = f" (opened {age})" if age else ""
+        labels_str = f" [{', '.join(issue.labels)}]" if issue.labels else ""
+        return (
+            f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
+            f"{comments_str}{refs_str}{labels_str}"
+        )
+
+    def _render_group(status: str, issues: list[Issue], is_terminal: bool) -> None:
+        # Apply assigned_to filter
+        if assigned_to:
+            issues = [i for i in issues if i.assigned_to == assigned_to]
+
+        if not issues:
+            return
+
+        if is_terminal and not show_done:
+            return
+
+        issues = sorted(issues, key=lambda i: priority_rank.get(i.priority or "", 4))
+
+        if is_terminal and limit_done is not None:
+            display = issues[:limit_done]
+            hidden = len(issues) - len(display)
+        else:
+            display = issues
+            hidden = 0
+
+        lines.append(f"\n[{status.upper()}] ({len(issues)})")
+        for issue in display:
+            lines.append(_fmt_issue(issue))
+        if hidden > 0:
+            lines.append(f"  ... and {hidden} more (use limit_done=None to see all)")
 
     # Show active statuses first, then terminal, then any custom
     seen = set()
-    status_display_order = active_statuses + terminal_statuses
-    for status in status_display_order:
-        issues = grouped.get(status, [])
+    standard_order = active_statuses + ["resolved", "closed", "wont-fix", "done", "complete", "shipped"]
+    for status in standard_order:
         seen.add(status)
+        issues = grouped.get(status, [])
         if not issues:
             continue
-        issues.sort(key=lambda i: priority_rank.get(i.priority or "", 4))
-        lines.append(f"\n[{status.upper()}] ({len(issues)})")
-        for issue in issues:
-            pri = f" !{issue.priority}" if issue.priority else ""
-            assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
-            refs_str = f" refs:{len(issue.refs)}" if issue.refs else ""
-            if issue.comments:
-                age = _time_ago(issue.comments[-1].date)
-                comments_str = f" ({len(issue.comments)}c, {age})" if age else f" ({len(issue.comments)}c)"
-            else:
-                comments_str = ""
-            labels_str = f" [{', '.join(issue.labels)}]" if issue.labels else ""
-            lines.append(
-                f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
-                f"{comments_str}{refs_str}{labels_str}"
-            )
+        is_terminal = status in _TERMINAL_STATUSES
+        _render_group(status, issues, is_terminal)
 
     # Any custom statuses not in the standard list
     for status, issues in grouped.items():
         if status not in seen:
-            issues.sort(key=lambda i: priority_rank.get(i.priority or "", 4))
-            lines.append(f"\n[{status.upper()}] ({len(issues)})")
-            for issue in issues:
-                pri = f" !{issue.priority}" if issue.priority else ""
-                assign = f" @{issue.assigned_to}" if issue.assigned_to else ""
-                if issue.comments:
-                    age = _time_ago(issue.comments[-1].date)
-                    comments_str = f" ({len(issue.comments)}c, {age})" if age else f" ({len(issue.comments)}c)"
-                else:
-                    comments_str = ""
-                lines.append(
-                    f"  {issue.id[:8]} {issue.title[:50]}{pri}{assign}"
-                    f"{comments_str}"
-                )
+            is_terminal = status in _TERMINAL_STATUSES
+            _render_group(status, issues, is_terminal)
 
     return "\n".join(lines)
