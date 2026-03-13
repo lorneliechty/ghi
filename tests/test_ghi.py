@@ -687,6 +687,181 @@ def test_none_fields_not_serialized():
         cleanup(d)
 
 
+# ── v2.2.0 feature tests ─────────────────────────────────────
+
+
+def test_list_filter_opened_by():
+    """list_issues should filter by opened_by."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("By Alice", "A", "Alice", root=d)
+        ghi.open_issue("By Bob", "B", "Bob", root=d)
+        ghi.open_issue("Also Alice", "C", "Alice", root=d)
+
+        alice_issues = ghi.list_issues(opened_by="Alice", root=d)
+        assert len(alice_issues) == 2
+        titles = {i.title for i in alice_issues}
+        assert "By Alice" in titles
+        assert "Also Alice" in titles
+
+        bob_issues = ghi.list_issues(opened_by="Bob", root=d)
+        assert len(bob_issues) == 1
+        assert bob_issues[0].title == "By Bob"
+    finally:
+        cleanup(d)
+
+
+def test_list_filter_opened_by_with_other_filters():
+    """opened_by should AND with other filters."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Alice", labels=["bug"], root=d)
+        ghi.open_issue("B", "B", "Alice", labels=["enhancement"], root=d)
+        ghi.open_issue("C", "C", "Bob", labels=["bug"], root=d)
+
+        results = ghi.list_issues(opened_by="Alice", label="bug", root=d)
+        assert len(results) == 1
+        assert results[0].title == "A"
+    finally:
+        cleanup(d)
+
+
+def test_find_issues_title_only():
+    """find_issues with title_only=True should not match description/comments."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Mount failure", "Unrelated desc", "Test", root=d)
+        ghi.open_issue("Other issue", "Mount is mentioned here", "Test", root=d)
+
+        # Full search finds both
+        all_results = ghi.find_issues("mount", root=d)
+        assert len(all_results) == 2
+
+        # Title-only finds just the first
+        title_results = ghi.find_issues("mount", title_only=True, root=d)
+        assert len(title_results) == 1
+        assert title_results[0].title == "Mount failure"
+    finally:
+        cleanup(d)
+
+
+def test_find_issues_with_status_filter():
+    """find_issues should combine text search with status filter."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("Fix mount bug", "Details", "Test", root=d)
+        ghi.open_issue("Mount improvement", "Ideas", "Test", root=d)
+        ghi.update_status(a.id, "closed", "Test", "Fixed.", root=d)
+
+        # Search "mount" but only open issues
+        results = ghi.find_issues("mount", status="open", root=d)
+        assert len(results) == 1
+        assert results[0].title == "Mount improvement"
+    finally:
+        cleanup(d)
+
+
+def test_find_issues_compound_query():
+    """find_issues should support text + opened_by + status compound queries."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("Deploy fix", "Deploy issue", "Alice", root=d)
+        ghi.open_issue("Deploy review", "Deploy review", "Bob", root=d)
+        ghi.open_issue("Other thing", "Unrelated", "Alice", root=d)
+
+        results = ghi.find_issues("deploy", opened_by="Alice", root=d)
+        assert len(results) == 1
+        assert results[0].title == "Deploy fix"
+    finally:
+        cleanup(d)
+
+
+def test_count_issues():
+    """count_issues should return counts grouped by status."""
+    d = make_temp_repo()
+    try:
+        ghi.open_issue("A", "A", "Test", root=d)
+        ghi.open_issue("B", "B", "Test", root=d)
+        c = ghi.open_issue("C", "C", "Test", root=d)
+        ghi.update_status(c.id, "closed", "Test", "Done.", root=d)
+
+        counts = ghi.count_issues(root=d)
+        assert counts["open"] == 2
+        assert counts["closed"] == 1
+        assert counts["_total"] == 3
+    finally:
+        cleanup(d)
+
+
+def test_count_issues_empty():
+    """count_issues on empty repo."""
+    d = make_temp_repo()
+    try:
+        counts = ghi.count_issues(root=d)
+        assert counts["_total"] == 0
+    finally:
+        cleanup(d)
+
+
+def test_bulk_update_status():
+    """bulk_update_status should close multiple issues at once."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("A", "A", "Test", root=d)
+        b = ghi.open_issue("B", "B", "Test", root=d)
+        c = ghi.open_issue("C", "C", "Test", root=d)
+
+        results = ghi.bulk_update_status(
+            [a.id, b.id, c.id], "closed", "Test",
+            "Batch closing all.", root=d,
+        )
+        assert len(results) == 3
+        for issue in results:
+            assert issue.status == "closed"
+
+        # Verify by reading back
+        for issue_id in [a.id, b.id, c.id]:
+            read_back = ghi.read_issue(issue_id, root=d)
+            assert read_back.status == "closed"
+    finally:
+        cleanup(d)
+
+
+def test_bulk_update_status_with_objects():
+    """bulk_update_status should accept Issue objects."""
+    d = make_temp_repo()
+    try:
+        a = ghi.open_issue("A", "A", "Test", root=d)
+        b = ghi.open_issue("B", "B", "Test", root=d)
+
+        # Pass Issue objects directly
+        results = ghi.bulk_update_status(
+            [a, b], "resolved", "Test",
+            "Both resolved.", root=d,
+        )
+        assert len(results) == 2
+        assert results[0].status == "resolved"
+        assert results[1].status == "resolved"
+    finally:
+        cleanup(d)
+
+
+def test_comment_accepts_issue_object():
+    """comment() should accept an Issue object instead of a string ID."""
+    d = make_temp_repo()
+    try:
+        issue = ghi.open_issue("Test", "Test", "Test", root=d)
+
+        # Pass the Issue object directly
+        ghi.comment(issue, "Author", "Works with object!", root=d)
+
+        read_back = ghi.read_issue(issue.id, root=d)
+        assert len(read_back.comments) == 1
+        assert read_back.comments[0].text == "Works with object!"
+    finally:
+        cleanup(d)
+
+
 # ── Run all tests ─────────────────────────────────────────────
 
 
@@ -726,6 +901,17 @@ def run_all():
         test_summary_output,
         test_summary_empty,
         test_none_fields_not_serialized,
+        # v2.2.0 tests
+        test_list_filter_opened_by,
+        test_list_filter_opened_by_with_other_filters,
+        test_find_issues_title_only,
+        test_find_issues_with_status_filter,
+        test_find_issues_compound_query,
+        test_count_issues,
+        test_count_issues_empty,
+        test_bulk_update_status,
+        test_bulk_update_status_with_objects,
+        test_comment_accepts_issue_object,
     ]
 
     passed = 0

@@ -21,7 +21,7 @@ Usage:
     ghi.open_issue("Title", "Description", "AgentName")
 """
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 import os
 import re
@@ -613,12 +613,21 @@ def list_issues(
     label: Optional[str] = None,
     assigned_to: Optional[str] = None,
     priority: Optional[str] = None,
+    opened_by: Optional[str] = None,
     root: Optional[str] = None,
 ) -> list[Issue]:
     """List all issues, optionally filtered. Newest first.
 
     All filters are ANDed — an issue must match every specified
     filter to be included.
+
+    Args:
+        status: Filter by status (e.g., "open", "closed").
+        label: Filter by label (issue must have this label).
+        assigned_to: Filter by assignee name.
+        priority: Filter by priority level.
+        opened_by: Filter by who opened the issue.
+        root: Repo root (auto-detected if None).
     """
     if root is None:
         root = _find_ghi_root()
@@ -645,6 +654,8 @@ def list_issues(
             continue
         if priority and issue.priority != priority:
             continue
+        if opened_by and issue.opened_by != opened_by:
+            continue
 
         results.append(issue)
 
@@ -654,11 +665,22 @@ def list_issues(
 
 def find_issues(
     query: str,
+    title_only: bool = False,
+    status: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    opened_by: Optional[str] = None,
     root: Optional[str] = None,
 ) -> list[Issue]:
-    """Search issues by text match in title, description, comments.
+    """Search issues by text match. Case-insensitive. Title matches
+    rank highest.
 
-    Case-insensitive. Title matches rank highest.
+    Args:
+        query: Text to search for.
+        title_only: If True, only search in issue titles.
+        status: Optional filter — only search issues with this status.
+        assigned_to: Optional filter — only search issues assigned to this name.
+        opened_by: Optional filter — only search issues opened by this name.
+        root: Repo root (auto-detected if None).
     """
     if root is None:
         root = _find_ghi_root()
@@ -666,20 +688,78 @@ def find_issues(
     query_lower = query.lower()
     scored = []
 
-    for issue in list_issues(root=root):
+    base_issues = list_issues(
+        status=status,
+        assigned_to=assigned_to,
+        opened_by=opened_by,
+        root=root,
+    )
+
+    for issue in base_issues:
         score = 0
         if query_lower in issue.title.lower():
             score += 3
-        if query_lower in issue.description.lower():
-            score += 2
-        for c in issue.comments:
-            if query_lower in c.text.lower():
-                score += 1
+        if not title_only:
+            if query_lower in issue.description.lower():
+                score += 2
+            for c in issue.comments:
+                if query_lower in c.text.lower():
+                    score += 1
         if score > 0:
             scored.append((score, issue))
 
     scored.sort(key=lambda x: (-x[0], x[1].opened_date))
     return [issue for _, issue in scored]
+
+
+def count_issues(root: Optional[str] = None) -> dict:
+    """Return a dict of issue counts grouped by status.
+
+    Example return: {"open": 3, "closed": 5, "in-progress": 1, "_total": 9}
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    counts: dict[str, int] = {}
+    for issue in list_issues(root=root):
+        counts[issue.status] = counts.get(issue.status, 0) + 1
+    counts["_total"] = sum(counts.values())
+    return counts
+
+
+def bulk_update_status(
+    issue_ids: list[str],
+    new_status: str,
+    author: str,
+    reason: str,
+    root: Optional[str] = None,
+) -> list[Issue]:
+    """Change the status of multiple issues at once.
+
+    Convenience wrapper around update_status() for closing/resolving
+    batches of issues without N separate calls.
+
+    Args:
+        issue_ids: List of issue IDs (full UUIDs or prefixes).
+            Also accepts Issue objects.
+        new_status: The new status to set on all issues.
+        author: Name of the agent making the change.
+        reason: Reason for the status change (shared across all).
+        root: Repo root (auto-detected if None).
+
+    Returns:
+        List of updated Issue objects.
+    """
+    if root is None:
+        root = _find_ghi_root()
+
+    results = []
+    for issue_id in issue_ids:
+        if hasattr(issue_id, 'id'):
+            issue_id = issue_id.id
+        results.append(update_status(issue_id, new_status, author, reason, root=root))
+
+    return results
 
 
 def summary(root: Optional[str] = None) -> str:
