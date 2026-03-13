@@ -1,106 +1,129 @@
-ghi: Git Has Issues
-====================
-Git Has Issues (ghi), is an open source implementation of an Issues-compatible issue tracking system for the git version control system.
-Ghi relies on Issues for the definition of how an issue is defined and provides the necessary set of helpful tools that make issue tracking possible.
+# ghi: Git Has Issues
 
-## Sufficiently confusing? What is ghi really meant to be?
-Ghi is meant to be a bug tracker.
-Beyond bugs though it can track features, support tickets, and any other kind of to-do style list of issues... an "issue tracker".
-Rather than try to define what an Issue is though it focuses on how to track them within git.
+An agent-first issue tracker that stores issues as markdown files inside your git repository. No external services, no network, no databases. Issues are committed alongside code and travel with the repo.
 
-Ghi leaves Issue definition up to another project: "Issues".
-The Issues project focuses only on what information should be stored in an Issue and, perhaps more importantly, what information should be left to an SCM like git.
-The idea of tracking Issues within git is where the project gets its name: Git Has Issues.
+Originally created by [Lorne Liechty](https://github.com/lorneliechty/ghi) in 2012 as a CLI tool for developers. Rewritten in 2026 for AI agent collaboration — where the "interface" is the file format itself, and the "CLI" is a thin Python library that agents import directly.
 
-*Wondering where the Issues project is? It's currently under development and not yet ready for public viewing. If you grok ghi though you'll love Issues! A link will be provided when it is ready.*
+## Why
 
-## Why write a new bug tracker? What are the benefits?
-Currently, the primary goal of ghi is to make bug tracking orders-of-magnitude faster for the individual developer.
-Seondary goals include better team collaboration, improvements to complex bug tracking workflows, and generally faster innovation through standardized Issue definition.
+Multi-agent systems need a way to debate. When Agent A discovers that a documented pattern no longer works, it needs to say so in a place where Agent B (running days later) can see the report, add evidence, and help resolve it. KB files aren't the right place for that — they're reference material, not discussions. Issues are discussions.
 
-Most individual developers are slowed down by existing bug trackers for a few reasons:
-* There are too many project-management related options that they don't need or care about
-* The web interface is not quickly accessible
-* The GUI is clunky / difficult to use
-* Bugs have turned into pages of comments that take forever to read and become useless for quick consumption
-* Everything is too slow
+ghi stores those discussions in `.ghi/issues/` as readable markdown files, committed to git. No infrastructure required. Issues branch with the code, merge with the code, and provide a complete audit trail through git history.
 
-Ghi tries to solve some of these problems by:
-* Moving all project management related information to the SCM (e.g., bugs on branches is amazing)
-* For now, there is no web interface ;) On the plus side, connectivity is never a problem
-* Ghi focusses on keeping look and feel that is very similar to working with the git command line
-* Ghi completely removes comments in favor of wiki-style Issue descriptions
-* Ghi is very, very fast when compared to web-based bug trackers
+## Architecture
 
-## Sounds good. How do I use ghi?
-The following sections provide example commands for setting up and using ghi in some basic workflows.
-Hopefully these will also clearly show the speed and power of ghi as well.
+ghi is a **single file** (`ghi.py`, ~300 lines, zero dependencies). When you run `ghi.init()`, it copies itself into the repo's `.ghi/` directory:
 
-### How to install ghi:
-Installing ghi on your machine is easy. Just clone the repository and put it on your path!
-The project dependencies are kept intentionally minimal (just python 2.7\* and git 1.7.4)
+```
+.ghi/
+  ghi.py           ← the library (self-deployed)
+  FORMAT.md        ← format specification
+  config.yaml      ← repo-level settings
+  issues/
+    <uuid>.md      ← one file per issue
+```
 
-	git clone git://github.com/lorneliechty/ghi.git /path/to/ghi
-	export PATH=$PATH:/path/to/ghi	# add this line to your ~/.bashrc or ~/.bash_profile
-	./install-bashcompletion.sh		# installs bash completion (use --uninstall option to remove bash completion)
+The library travels with the repo. An agent on any branch gets the version of ghi that was current when that branch was created. Improvements merge forward through normal git operations.
 
-### How to start using ghi in your git repository:
-Adding a bug tracker to your project should be as easy as starting your repository.
-With ghi, it is!
+## Quick Start
 
-	git init
-	ghi init	# will auto-commit the initialized .ghi directory in the root of the git repository
+```python
+# First time: initialize from the development repo
+import ghi
+ghi.init("/path/to/your/repo")
 
-### How to add an Issue / bug in ghi:
-Adding a bug should be a fast as possible. One line is better than 3 or 4 clicks in a browser.
+# After that: import from the deployed copy
+import sys; sys.path.insert(0, '.ghi')
+import ghi
 
-	git issue add "Bug I need to fix"
-	git commit	# ghi will auto-suggest a commit message based on issues you've added
+# Open an issue
+issue = ghi.open_issue(
+    title="kb/agents.md mount pattern outdated",
+    description="The documented mount-and-clone pattern fails when...",
+    author="Lidia",
+    labels=["kb-staleness"],
+)
 
-\- alternatively \-
+# Add a comment
+ghi.comment(issue.id, "Wiktor", "Investigated. The pattern is valid but...")
 
-	git commit add	# opens up an interactive editor based on your configured editor preference in git
+# Change status
+ghi.update_status(issue.id, "resolved", "Wiktor",
+    "Added troubleshooting note in commit 26ded11.")
 
-### How to fix an Issue / bug in ghi:
-You know what would be great?... Marking a bug fixed in the same commit as the code change that fixes the Issue.
-With ghi this is possible.
+# List open issues
+for issue in ghi.list_issues(status="open"):
+    print(f"[{issue.id[:8]}] {issue.title}")
 
-	<fix bug in source code>
-	git issue edit -s Fixed [issue id]
-	git commit	# ghi will auto-suggest a commit message based on issues you've edited
+# Search
+results = ghi.find_issues("mount")
+```
 
-\- alternatively \-
+## The File Format
 
-	git commit edit [issue id]	# opens up an interactive editor based on your configured editor preference in git
+Issues are markdown with YAML frontmatter and HTML-comment delimiters for comments. The format is designed to be readable as plain markdown while being machine-parseable:
 
-### How to close an Issue / bug in ghi:
-Hate sifting through endless lists of closed bugs?
-In ghi, you remove an Issue when its closed and let the SCM handle archiving a file that should never change.
-
-	<verify bug fixed code in testing>
-	git issue rm [issue id]
-	git commit	# ghi will auto-suggest a commit message based on issues you've closed (removed)
-
-### How to list existing Issues in ghi:
-Two words is all it takes.
-
-	git issue
-
-#### How to set default list options in ghi:
-Want to provide some default styling to your Issue list?
-Use standard the git config file system.
-
-	git config --bool issue.ls.group true
-	git config issue.ls.sort status
-
-### How to organize issues in ghi:
-Ghi eschews a never-ending list of fields stored for each issue in favor of highly flexible groups.
-This allows branches, forks, or individual developers to orgranize the Issues as they see fit without having to change the Issue definition (re-organizing issues is not the same as changing issues!)
-
-	git issue group [issue id] [groupname]	# Example groups: Critical, Very High, High, Medium, Low... prioritize via ghi groups!
-
-
+```markdown
 ---
-This project is licensed under Apache License, Version 2.0. You may obtain a copy of the license at http://www.apache.org/licenses/LICENSE-2.0
+id: f80738a3-2ae8-4c0e-a7eb-42e0fba2ca85
+title: kb/agents.md mount pattern outdated
+status: resolved
+opened_by: Lidia
+opened_date: 2026-03-12T00:00:00Z
+labels: [kb-staleness]
+---
 
-\* You can use python 2.6.5 as long as you install the argprase module first (`sudo pip install argparse`).
+The documented mount-and-clone pattern fails when the bare repo
+has stale lock files from the nightly maintainer.
+
+<!-- ghi:comments -->
+
+<!-- ghi:comment author="Wiktor" date="2026-03-12T15:30:00Z" -->
+
+Investigated. The pattern is valid but the KB needs a
+troubleshooting note about lock files.
+
+<!-- ghi:comment author="Wiktor" date="2026-03-13T09:00:00Z" -->
+
+**Status changed:** open → resolved
+
+Added troubleshooting note in commit 26ded11.
+```
+
+The HTML comment markers (`<!-- ghi:comment ... -->`) are invisible in rendered markdown, so the file reads as clean prose with clear authorship.
+
+See [FORMAT.md](FORMAT.md) for the full specification.
+
+## Conventions
+
+**Management between mutually consenting adults.** There's no access control. The conventions are:
+
+1. **Only the opener edits the Description.** Others contribute through comments.
+2. **Comments are append-only.** Add yours at the bottom. Never edit or delete someone else's.
+3. **Status changes are documented.** Every status transition gets an automatic comment explaining why.
+4. **Issues are for cross-session concerns.** Not for session-specific notes or project-specific bugs.
+
+These aren't enforced by code. They're enforced by the format making the right thing obvious and the wrong thing feel weird — the same way `branch-per-agent` works in the toolkit without any enforcement mechanism.
+
+## API Reference
+
+| Function | Purpose |
+|----------|---------|
+| `ghi.init(path=".")` | Initialize `.ghi/` directory |
+| `ghi.open_issue(title, description, author, labels=[], root=None)` | Create a new issue |
+| `ghi.comment(issue_id, author, text, root=None)` | Append a comment |
+| `ghi.update_status(issue_id, new_status, author, reason, root=None)` | Change status (adds audit comment) |
+| `ghi.update_description(issue_id, author, new_description, root=None)` | Update description (adds audit comment) |
+| `ghi.read_issue(issue_id, root=None)` | Read a single issue |
+| `ghi.list_issues(status=None, label=None, root=None)` | List issues with optional filters |
+| `ghi.find_issues(query, root=None)` | Search by text match |
+
+All `issue_id` parameters accept full UUIDs or unambiguous prefixes.
+
+## Dependencies
+
+Python 3.10+. No external packages.
+
+## License
+
+Apache License 2.0 — same as the original ghi.

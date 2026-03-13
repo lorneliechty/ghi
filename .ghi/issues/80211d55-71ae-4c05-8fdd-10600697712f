@@ -1,9 +1,0 @@
-ISSUE-1
-2
-Advanced sorting of issue list
-Can probably use a git command (some variant of log?) to do this
-Need to be able to sort by:
-- Creation date
-- Status
-- ID
-- Title
