@@ -21,7 +21,7 @@ Usage:
     ghi.open_issue("Title", "Description", "AgentName")
 """
 
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 
 import os
 import re
@@ -399,6 +399,20 @@ def init(path: str = ".") -> str:
     format_dest = os.path.join(ghi_path, "FORMAT.md")
     if os.path.exists(format_src) and not os.path.exists(format_dest):
         shutil.copy2(format_src, format_dest)
+
+    # Copy v2.5.0 shell tools to the repo root so agents can use them directly.
+    # ghi.sh and generate_board.py live alongside ghi.py in the source repo.
+    # They are copied to the project root (not .ghi/) since they're meant to be
+    # called as ./ghi.sh and python3 generate_board.py from the working directory.
+    src_dir = os.path.dirname(this_file)
+    repo_root = os.path.abspath(path)
+    for shell_tool in ("ghi.sh", "generate_board.py"):
+        src = os.path.join(src_dir, shell_tool)
+        dest = os.path.join(repo_root, shell_tool)
+        if os.path.exists(src) and not os.path.exists(dest):
+            shutil.copy2(src, dest)
+            if shell_tool.endswith(".sh"):
+                os.chmod(dest, 0o755)
 
     # Ensure issues dir exists in git
     gitkeep = os.path.join(issues_path, ".gitkeep")

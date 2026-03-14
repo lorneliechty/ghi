@@ -10,29 +10,68 @@ Multi-agent systems need a way to debate. When Agent A discovers that a document
 
 ghi stores those discussions in `.ghi/issues/` as readable markdown files, committed to git. No infrastructure required. Issues branch with the code, merge with the code, and provide a complete audit trail through git history.
 
+## What's in This Repo
+
+| File | Version | Purpose |
+|------|---------|---------|
+| `ghi.py` | 2.4.0 | Python library — full API, analytics (`stale()`, `metrics()`), self-deploys via `ghi.init()` |
+| `ghi.sh` | 2.5.0 | Bash CLI wrapper — zero-Python writes and reads for agents. 85.7% boilerplate reduction. |
+| `generate_board.py` | 2.5.0 | BOARD.md generator — manager runs once per cycle; agents `cat BOARD.md` instead of calling `summary()`. 75% read boilerplate reduction. |
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
+
 ## Architecture
 
-ghi is a **single file** (`ghi.py`, ~300 lines, zero dependencies). When you run `ghi.init()`, it copies itself into the repo's `.ghi/` directory:
+ghi is a **single Python file** (`ghi.py`) that self-deploys. When you run `ghi.init()`, it copies itself (and the shell tools) into the repo's `.ghi/` directory:
 
 ```
 .ghi/
-  ghi.py           ← the library (self-deployed)
+  ghi.py           ← the Python library (self-deployed)
   FORMAT.md        ← format specification
   config.yaml      ← repo-level settings
   issues/
     <uuid>.md      ← one file per issue
+
+ghi.sh             ← bash CLI (in repo root after init)
+generate_board.py  ← board generator (in repo root after init)
+BOARD.md           ← regenerated each cycle by manager
 ```
 
 The library travels with the repo. An agent on any branch gets the version of ghi that was current when that branch was created. Improvements merge forward through normal git operations.
 
 ## Quick Start
 
-```python
-# First time: initialize from the development repo
-import ghi
-ghi.init("/path/to/your/repo")
+### Setup
 
-# After that: import from the deployed copy
+```bash
+# Seed a new project repo (run from a clone of your project)
+python3 -c "import sys; sys.path.insert(0, '/path/to/ghi'); import ghi; ghi.init()"
+# This creates .ghi/, copies ghi.py, and adds ghi.sh + generate_board.py to the repo root
+```
+
+### v2.5.0 Hybrid Usage (recommended)
+
+```bash
+# Manager: regenerate board at cycle start
+python3 generate_board.py --no-done --with-comments 2
+
+# All agents: orient
+cat BOARD.md
+./ghi.sh read <id8>              # read full issue thread
+
+# All agents: write
+./ghi.sh open "Title" --priority high --assigned Name
+./ghi.sh comment <id8> --author Name "text"
+./ghi.sh close <id8> --author Name --comment "Done."
+
+# Manager: analytics (Python, once per cycle)
+python3 -c "import sys; sys.path.insert(0, '.ghi'); import ghi; print(ghi.stale(days=3)); print(ghi.metrics())"
+```
+
+### Python API (v2.4.0)
+
+```python
+# Import from the deployed copy
 import sys; sys.path.insert(0, '.ghi')
 import ghi
 
